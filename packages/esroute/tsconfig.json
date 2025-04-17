@@ -1,8 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "preserveWatchOutput": true,
-    "outDir": "./dist"
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "composite": true
   },
-  "files": ["src/index.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts"]
 }
