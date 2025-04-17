@@ -1,20 +1,25 @@
 {
   "name": "esroute-workspaces",
   "type": "module",
+  "private": true,
+  "license": "MIT",
+  "author": "Sven Rogge <mail@sven-rogge.com>",
   "scripts": {
-    "build": "yarn workspaces foreach -vtp run build",
+    "build": "npm run -ws build",
     "test": "vitest",
-    "typecheck": "yarn workspaces foreach -vp run typecheck"
+    "typecheck": "npm run -ws typecheck"
   },
   "devDependencies": {
-    "happy-dom": "^8.4.2",
+    "@vitest/coverage-v8": "^3.1.1",
+    "happy-dom": "^17.4.4",
     "regenerator-runtime": "^0.14.1",
     "typescript": "^5.4.5",
-    "vite": "^5.2.9",
-    "vitest": "^1.5.0"
+    "vitest": "^3.1.1"
   },
   "workspaces": [
     "packages/*"
   ],
-  "packageManager": "yarn@3.2.0"
+  "volta": {
+    "node": "22.14.0"
+  }
 }

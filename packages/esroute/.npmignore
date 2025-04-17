@@ -1,7 +1,6 @@
-demo
-.editorconfig
-.vscode
-jest.config.js
 src
 tsconfig.json
-tsconfig-check.json
+dist/**/*.map
+dist/**/*.spec.*
+demo
+*.tsbuildinfo

@@ -1,29 +1,26 @@
 {
   "name": "@esroute/lit",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "A small efficient client-side routing library for lit, written in TypeScript.",
   "main": "dist/index.js",
+  "license": "MIT",
+  "author": "Sven Rogge <mail@sven-rogge.com>",
+  "repository": "github:sv2dev/esroute",
+  "homepage": "https://github.com/sv2dev/esroute/tree/main/packages/esroute-lit",
   "scripts": {
-    "build": "rm -rf dist && tsc & yarn esbuild",
-    "esbuild": "esbuild src/index.ts --bundle --sourcemap --format=esm --minify --external:lit --external:esroute --outfile=dist/index.js",
-    "typecheck": "tsc -p tsconfig-check.json",
-    "prepublish": "yarn build & yarn typecheck"
+    "build": "tsc -b",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "route",
     "routing",
     "lit"
   ],
-  "repository": "github:svi3c/esroute",
-  "homepage": "https://github.com/svi3c/esroute/tree/main/packages/esroute-lit",
-  "author": "Sven Rogge <sreglitzki@gmail.com>",
-  "license": "MIT",
   "devDependencies": {
-    "esbuild": "^0.20.2",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "esroute": "^0.9.0",
+    "esroute": "^0.10.0",
     "lit": "^3.1.1"
   }
 }

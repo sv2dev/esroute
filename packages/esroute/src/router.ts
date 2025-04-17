@@ -181,9 +181,8 @@ export const createRouter = <T = any>({
   };
 
   const updateState = ({ state, replace, href }: NavOpts) => {
-    const history = window.history;
-    if (replace) history.replaceState(state, "", href);
-    else history.pushState(state, "", href);
+    if (replace) history.replaceState(state ?? null, "", href);
+    else history.pushState(state ?? null, "", href);
   };
 
   return r;

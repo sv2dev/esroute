@@ -1,3 +1,5 @@
 src
 tsconfig.json
-tsconfig-check.json
+dist/**/*.map
+dist/**/*.spec.*
+*.tsbuildinfo

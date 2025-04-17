@@ -57,11 +57,11 @@ export class NavOpts implements NavMeta {
         );
       if (hash) this.hash = hash;
     } else this.path = target as string[];
-    if (hash !== undefined) this.hash = hash;
-    if (pop !== undefined) this.pop = pop;
-    if (search !== undefined) this.search = search;
-    if (state !== undefined) this.state = state;
-    if (replace !== undefined) this.replace = replace;
+    if (hash != null) this.hash = hash;
+    if (pop != null) this.pop = pop;
+    if (search != null) this.search = search;
+    if (state != null) this.state = state;
+    if (replace != null) this.replace = replace;
     this.search ??= {};
   }
 

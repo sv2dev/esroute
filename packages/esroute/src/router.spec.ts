@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NavOpts } from "./nav-opts";
-import { createRouter, Router } from "./router";
+import { Router, createRouter } from "./router";
 
 describe("Router", () => {
   const onResolve = vi.fn();
@@ -24,7 +24,7 @@ describe("Router", () => {
       location.href = "http://localhost/foo";
 
       window.dispatchEvent(new PopStateEvent("popstate"));
-      await new Promise(setImmediate);
+      await new Promise((resolve) => setTimeout(resolve, 0));
       await router.resolution;
 
       expect(onResolve).toHaveBeenCalledWith({
@@ -43,7 +43,7 @@ describe("Router", () => {
 
       anchor.click();
       // await router.resolution;
-      await new Promise(setImmediate);
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(onResolve).toHaveBeenLastCalledWith({
         value: "foo",
@@ -56,19 +56,19 @@ describe("Router", () => {
     it("should navigate to route and push state", async () => {
       await router.go("/foo");
 
-      expect(history.pushState).toHaveBeenCalledWith(undefined, "", "/foo");
+      expect(history.pushState).toHaveBeenCalledWith(null, "", "/foo");
     });
 
     it("should replace the state, if replace flag is set", async () => {
       await router.go("/foo", { replace: true });
 
-      expect(history.replaceState).toHaveBeenCalledWith(undefined, "", "/foo");
+      expect(history.replaceState).toHaveBeenCalledWith(null, "", "/foo");
     });
 
     it("should replace the state, if replace flag is set with NavMeta", async () => {
       await router.go({ path: ["foo"], replace: true });
 
-      expect(history.replaceState).toHaveBeenCalledWith(undefined, "", "/foo");
+      expect(history.replaceState).toHaveBeenCalledWith(null, "", "/foo");
     });
 
     it("should stay on the same route and not block further routing, if resolution fails", async () => {
@@ -78,13 +78,16 @@ describe("Router", () => {
       } catch {}
       await router.go({ path: [""], replace: true });
 
-      expect(history.replaceState).toHaveBeenCalledWith(undefined, "", "/foo");
-      expect(history.replaceState).not.toHaveBeenCalledWith(
-        undefined,
-        "",
-        "/fail"
-      );
-      expect(history.replaceState).toHaveBeenCalledWith(undefined, "", "/");
+      expect(history.replaceState).toHaveBeenCalledWith(null, "", "/foo");
+      expect(history.replaceState).not.toHaveBeenCalledWith(null, "", "/fail");
+      expect(history.replaceState).toHaveBeenCalledWith(null, "", "/");
+    });
+
+    it("should replace the state by default, if target is a mapping funciton", async () => {
+      await router.go("/foo?a=b");
+      await router.go(() => ({ search: { a: "c" } }));
+
+      expect(history.replaceState).toHaveBeenCalledWith(null, "", "/foo?a=c");
     });
   });
 
