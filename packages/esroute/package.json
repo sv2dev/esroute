@@ -1,6 +1,6 @@
 {
   "name": "esroute",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "A small efficient framework-agnostic client-side routing library, written in TypeScript.",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",

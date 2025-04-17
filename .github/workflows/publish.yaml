@@ -56,7 +56,7 @@ jobs:
       - run: |
           npm install
           cd packages/esroute
-          npm publish
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -77,6 +77,6 @@ jobs:
       - run: |
           npm install
           cd packages/esroute-lit
-          npm publish
+          npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
