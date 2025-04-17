@@ -82,6 +82,13 @@ describe("Router", () => {
       expect(history.replaceState).not.toHaveBeenCalledWith(null, "", "/fail");
       expect(history.replaceState).toHaveBeenCalledWith(null, "", "/");
     });
+
+    it("should replace the state by default, if target is a mapping funciton", async () => {
+      await router.go("/foo?a=b");
+      await router.go(() => ({ search: { a: "c" } }));
+
+      expect(history.replaceState).toHaveBeenCalledWith(null, "", "/foo?a=c");
+    });
   });
 
   describe("onResolve()", () => {
