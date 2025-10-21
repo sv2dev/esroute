@@ -15,6 +15,8 @@ export interface NavMeta {
   path?: string[];
   /** The href to resolve. Should be relative. */
   href?: string;
+  /** Whether the rendering should be skipped. */
+  skipRender?: boolean;
 }
 
 export type StrictNavMeta = NavMeta &
@@ -32,6 +34,7 @@ export class NavOpts implements NavMeta {
   readonly params: string[] = [];
   readonly hash?: string;
   readonly replace?: boolean;
+  readonly skipRender?: boolean;
   readonly path: string[];
   readonly search: Record<string, string>;
   readonly pop?: boolean;
@@ -40,7 +43,7 @@ export class NavOpts implements NavMeta {
   constructor(target: StrictNavMeta);
   constructor(target: PathOrHref, opts?: NavMeta);
   constructor(target: PathOrHref | StrictNavMeta, opts: NavMeta = {}) {
-    let { path, href, hash, pop, replace, search, state } =
+    let { path, href, hash, pop, replace, search, state, skipRender } =
       typeof target === "string" || Array.isArray(target) ? opts : target;
     if (path) this.path = path;
     else if (href || typeof target === "string") {
@@ -62,6 +65,7 @@ export class NavOpts implements NavMeta {
     if (search != null) this.search = search;
     if (state != null) this.state = state;
     if (replace != null) this.replace = replace;
+    if (skipRender != null) this.skipRender = skipRender;
     this.search ??= {};
   }
 
