@@ -18,6 +18,7 @@ Those features may be the ones you are looking for.
 - [🏎 Fast startup and runtime](#-fast-startup-and-runtime)
 - [🛡 Route guards](#-route-guards)
 - [🦄 Virtual routes](#-virtual-routes)
+- [⏱️ Deferred rendering](#-deferred-rendering-1)
 
 ### 🌈 Framework agnostic
 
@@ -37,6 +38,20 @@ router.go((prev) => ({
   search: { foo: "baz" },
 }));
 ```
+
+#### Wrapped history navigation API
+
+The `go` method is a wrapper around the history navigation API.
+You can use it to navigate to a specific history state:
+
+```ts
+await router.go(1); // Go one step forward and wait for the popstate event to be dispatched
+await router.go(-2); // Go two steps back and wait for the popstate event to be dispatched
+```
+
+A difference is that the `go` method will not render the page, if the `skipRender` flag is set.
+
+Additionally, `go` is asynchronous, and in case of history navigation, it will wait for the popstate event to be dispatched.
 
 ### 🕹 Simple configuration
 
@@ -95,7 +110,7 @@ esroute comes with no dependencies and is quite small.
 
 The route resolution is done by traversing the route spec that is used to configure the app routes (no preprocessing required). The algorithm is based on simple string comparisons (no regex matching).
 
-#### 🛡 Route guards
+### 🛡 Route guards
 
 You can prevent resolving routes by redirecting to another route within a guard:
 
@@ -164,6 +179,38 @@ const router = createRouter({
 ```
 
 In this sczenario we have the `memberRoutes` next to the `/login` route.
+
+### ⏱️ Deferred rendering
+
+You can defer rendering by passing a function to the `render` method.
+This can be useful to trigger multiple successive navigations without intermediate rendering to prevent flickering.
+
+```ts
+router.render(async () => {
+  await router.go("/foo"); // Will not render the page
+  await router.go("/bar"); // Will render the page
+});
+```
+
+One thing to note is that no guards and render functions will be executed for intermediate navigation.
+So any specified guards or redirects within the render functions will only be executed for the last navigation.
+
+You can also defer rendering by passing the `skipRender` option to the `go` method.
+
+This is equivalent to the code above:
+
+```ts
+await router.go("/foo", { skipRender: true });
+await router.go("/bar");
+```
+
+And this one as well:
+
+```ts
+await router.go("/foo", { skipRender: true });
+await router.go("/bar", { skipRender: true });
+await router.render();
+```
 
 ## Router configuration
 
