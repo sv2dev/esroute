@@ -1,14 +1,19 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { NavOpts } from "./nav-opts";
 import { Router, createRouter } from "./router";
 
 describe("Router", () => {
-  const onResolve = vi.fn();
+  let onResolve: Mock;
   let router: Router<any>;
   beforeEach(() => {
+    onResolve = vi.fn();
     vi.spyOn(history, "replaceState");
     vi.spyOn(history, "pushState");
+    vi.spyOn(history, "go").mockImplementation(() =>
+      setTimeout(() => window.dispatchEvent(new PopStateEvent("popstate")), 0)
+    );
     router = createRouter({
+      onResolve,
       routes: {
         "": ({}, next) => next ?? "index",
         foo: () => "foo",
@@ -19,7 +24,6 @@ describe("Router", () => {
 
   describe("init()", () => {
     it("should subscribe to popstate and anchor click events", async () => {
-      router.onResolve(onResolve);
       router.init();
       location.href = "http://localhost/foo";
 
@@ -34,7 +38,6 @@ describe("Router", () => {
     });
 
     it("should subscribe to popstate and anchor click events", async () => {
-      router.onResolve(onResolve);
       router.init();
       const anchor = document.createElement("a");
       document.body.appendChild(anchor);
@@ -89,13 +92,41 @@ describe("Router", () => {
 
       expect(history.replaceState).toHaveBeenCalledWith(null, "", "/foo?a=c");
     });
+
+    it("should skip rendering, if specified by the NavMeta", async () => {
+      await router.go("/foo", { skipRender: true });
+
+      expect(history.pushState).toHaveBeenCalledWith(null, "", "/foo");
+      expect(onResolve).not.toHaveBeenCalled();
+    });
+
+    it("should render only once, if render is called with defer function", async () => {
+      await router.render(async () => {
+        await router.go("/baz");
+        await router.go(-1);
+        await router.go("/foo");
+      });
+
+      expect(history.pushState).toHaveBeenCalledTimes(2);
+      expect(history.go).toHaveBeenCalledTimes(1);
+      expect(onResolve).toHaveBeenCalledWith({
+        opts: new NavOpts("/foo", { pop: false }),
+        value: "foo",
+      });
+    });
+
+    it("should forward to history.go(), if target is a number", async () => {
+      await router.go(1);
+
+      expect(history.go).toHaveBeenCalledWith(1);
+      expect(history.go).toHaveBeenCalledTimes(1);
+      expect(onResolve).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("onResolve()", () => {
     it("should initially call listener, if there is already a current resolution", async () => {
       await router.go("/foo");
-
-      router.onResolve(onResolve);
 
       expect(onResolve).toHaveBeenNthCalledWith(1, {
         value: "foo",
@@ -105,7 +136,6 @@ describe("Router", () => {
 
     it("should call the listener when a navigation has finished", async () => {
       await router.go("/foo");
-      router.onResolve(onResolve);
 
       await router.go("/foo");
 

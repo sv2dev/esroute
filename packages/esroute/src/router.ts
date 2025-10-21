@@ -19,14 +19,17 @@ export interface Router<T = any> {
    * Triggers a navigation.
    * You can modify the navigation options by passing in a second argument.
    * Returns a promise that resolves when the navigation is complete.
-   * @param target Can be one of array of path parts, a relative url, a NavOpts object or a
+   * @param target Can be one of number, array of path parts, a relative url, a NavOpts object or a
    *   function that derives new NavOpts from the current NavOpts.
+   *   If it is a number, it is forwarded to history.go().
    *   Use function to patch state, it uses replaceState() and keeps path, search and state
    *   by default.
    * @param opts The navigation metadata.
    */
-  go(target: StrictNavMeta | ((prev: NavOpts) => NavMeta)): Promise<void>;
-  go(target: PathOrHref, opts?: NavMeta): Promise<void>;
+  go(
+    target: number | StrictNavMeta | ((prev: NavOpts) => NavMeta)
+  ): Promise<void>;
+  go(target: number | PathOrHref, opts?: NavMeta): Promise<void>;
   /**
    * Use this to listen for route changes.
    * Returns an unsubscribe function.
@@ -46,6 +49,12 @@ export interface Router<T = any> {
    * Use this to wait for the current navigation to complete.
    */
   resolution?: Promise<Resolved<T>>;
+  /**
+   * Use this to render the current route (history and location).
+   * @param defer A function that defers rendering and can be used to trigger multiple successive
+   * navigations without intermediate rendering.
+   */
+  render(defer?: () => Promise<void>): Promise<void>;
 }
 
 export interface RouterConf<T = any> {
@@ -82,6 +91,7 @@ export const createRouter = <T = any>({
     onResolve ? [onResolve] : []
   );
   let resolution: Promise<Resolved<T>>;
+  let skipRender = false;
   const r: Router<T> = {
     routes,
     get current() {
@@ -90,17 +100,21 @@ export const createRouter = <T = any>({
     get resolution() {
       return resolution;
     },
-    init() {
-      window.addEventListener("popstate", stateFromHref);
+    async init() {
+      window.addEventListener("popstate", popStateListener);
       if (!noClick) document.addEventListener("click", linkClickListener);
-      stateFromHref({ state: history.state });
+      await resolveCurrent();
     },
     dispose() {
-      window.removeEventListener("popstate", stateFromHref);
+      window.removeEventListener("popstate", popStateListener);
       document.removeEventListener("click", linkClickListener);
     },
     async go(
-      target: PathOrHref | StrictNavMeta | ((prev: NavOpts) => NavMeta),
+      target:
+        | PathOrHref
+        | StrictNavMeta
+        | ((prev: NavOpts) => NavMeta)
+        | number,
       opts?: NavMeta
     ): Promise<void> {
       // Serialize all navigaton requests
@@ -118,12 +132,20 @@ export const createRouter = <T = any>({
           ...target(prevRes.opts),
         };
       }
+      if (typeof target === "number") {
+        const waiting = waitForPopState();
+        history.go(target);
+        await waiting;
+        if (skipRender || opts?.skipRender) return;
+        return resolveCurrent();
+      }
       const navOpts =
         target instanceof NavOpts
           ? target
           : typeof target === "string" || Array.isArray(target)
           ? new NavOpts(target, opts)
           : new NavOpts(target);
+      if (navOpts.skipRender || skipRender) return updateState(navOpts);
       const res = await applyResolution(resolve(r.routes, navOpts, notFound));
       updateState(res.opts);
     },
@@ -132,6 +154,21 @@ export const createRouter = <T = any>({
       if (_current) listener(_current);
       return () => _listeners.delete(listener);
     },
+    async render(defer?: () => Promise<void>) {
+      if (!defer) return resolveCurrent();
+      skipRender = true;
+      try {
+        await defer();
+      } finally {
+        skipRender = false;
+      }
+      await resolveCurrent();
+    },
+  };
+
+  const popStateListener = (e: PopStateEvent) => {
+    if (skipRender) return;
+    resolveCurrent(e);
   };
 
   const linkClickListener = (e: MouseEvent) => {
@@ -146,12 +183,12 @@ export const createRouter = <T = any>({
     }
   };
 
-  const stateFromHref = async (e: { state: any } | PopStateEvent) => {
+  const resolveCurrent = async (e?: PopStateEvent) => {
     const { href, origin } = window.location;
 
     const initialOpts = new NavOpts(href.substring(origin.length), {
-      state: e.state,
-      ...(e instanceof PopStateEvent && { pop: true }),
+      state: e ? e.state : history.state,
+      pop: !!e,
     });
     const { opts } = await applyResolution(
       resolve(r.routes, initialOpts, notFound)
@@ -183,6 +220,12 @@ export const createRouter = <T = any>({
   const updateState = ({ state, replace, href }: NavOpts) => {
     if (replace) history.replaceState(state ?? null, "", href);
     else history.pushState(state ?? null, "", href);
+  };
+
+  const waitForPopState = () => {
+    return new Promise<PopStateEvent>((r) =>
+      window.addEventListener("popstate", r, { once: true })
+    );
   };
 
   return r;

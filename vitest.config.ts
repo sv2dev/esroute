@@ -6,5 +6,6 @@ export default defineConfig({
     restoreMocks: true,
     environment: "happy-dom",
     pool: "forks",
+    testTimeout: 1000,
   },
 });
