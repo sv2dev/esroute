@@ -29,7 +29,7 @@ export interface Router<T = any, S = any, R extends RawRoutes = RawRoutes> {
   go(
     target: number | StrictNavMeta<S> | ((prev: NavOpts<S>) => NavMeta<S>)
   ): Promise<void>;
-  go(target: number | RoutePaths<R> | PathOrHref, opts?: NavMeta<S>): Promise<void>;
+  go(target: number | RoutePaths<R> | string[], opts?: NavMeta<S>): Promise<void>;
   /**
    * Use this to listen for route changes.
    * Returns an unsubscribe function.
@@ -181,7 +181,7 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
       ? e.target
       : e.composedPath?.().find(isAnchorElement);
     if (target && target.origin === location.origin) {
-      r.go(target.href.substring(location.origin.length), {
+      r.go(target.href.substring(location.origin.length) as RoutePaths<R>, {
         replace: "replace" in target.dataset,
       });
       e.preventDefault();

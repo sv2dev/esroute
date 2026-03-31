@@ -93,7 +93,7 @@ describe("Router", () => {
     });
 
     it("should replace the state by default, if target is a mapping funciton", async () => {
-      await router.go("/foo?a=b");
+      await router.go("/foo", { search: { a: "b" } });
       await router.go(() => ({ search: { a: "c" } }));
 
       expect(history.replaceState).toHaveBeenCalledWith(null, "", "/foo?a=c");
@@ -108,7 +108,7 @@ describe("Router", () => {
 
     it("should render only once, if render is called with defer function", async () => {
       await router.render(async () => {
-        await router.go("/baz");
+        await router.go(["baz"]);
         await router.go(-1);
         await router.go("/foo");
       });
