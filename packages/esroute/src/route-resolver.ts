@@ -1,26 +1,26 @@
 import { NavOpts } from "./nav-opts";
 import { Resolve, Routes } from "./routes";
 
-export interface Resolved<T> {
+export interface Resolved<T, S = any> {
   /** The resolved value of the route. */
   value: T;
   /** The final navigation options after all redirecting. */
-  opts: NavOpts;
+  opts: NavOpts<S>;
 }
 
-export type RouteResolver<T> = (
-  routes: Routes<T>,
-  opts: NavOpts,
-  notFound: Resolve<T>
-) => Promise<Resolved<T>>;
+export type RouteResolver<T, S = any> = (
+  routes: Routes<T, S>,
+  opts: NavOpts<S>,
+  notFound: Resolve<T, S>
+) => Promise<Resolved<T, S>>;
 
 const MAX_REDIRECTS = 10;
 
-export const resolve = async <T>(
-  routes: Routes<T>,
-  opts: NavOpts,
-  notFound: Resolve<T>
-): Promise<Resolved<T>> => {
+export const resolve = async <T, S = any>(
+  routes: Routes<T, S>,
+  opts: NavOpts<S>,
+  notFound: Resolve<T, S>
+): Promise<Resolved<T, S>> => {
   let value: NavOpts | T = opts;
   const navPath = new Array<NavOpts>();
   while (value instanceof NavOpts && navPath.length <= MAX_REDIRECTS) {

@@ -1,20 +1,20 @@
 import { NavMeta, NavOpts, PathOrHref, StrictNavMeta } from "./nav-opts";
 import { Resolved, resolve } from "./route-resolver";
-import { Resolve, Routes } from "./routes";
+import { Resolve, Routes, RoutePaths, RawRoutes } from "./routes";
 
-export type OnResolveListener<T> = (resolved: Resolved<T>) => void;
-export interface Router<T = any> {
+export type OnResolveListener<T, S = any> = (resolved: Resolved<T, S>) => void;
+export interface Router<T = any, S = any, R extends RawRoutes = RawRoutes> {
   /**
    * The routes configuration.
    * You may modify this object to change the routes.
    * Be sure to call `router.init()` after the current route is configured.
    */
-  routes: Routes<T>;
+  routes: Routes<T, S>;
   /**
    * The current resolved route.
    * It is updated after each route resolution.
    */
-  readonly current: NavOpts;
+  readonly current: NavOpts<S>;
   /**
    * Triggers a navigation.
    * You can modify the navigation options by passing in a second argument.
@@ -27,15 +27,15 @@ export interface Router<T = any> {
    * @param opts The navigation metadata.
    */
   go(
-    target: number | StrictNavMeta | ((prev: NavOpts) => NavMeta)
+    target: number | StrictNavMeta<S> | ((prev: NavOpts<S>) => NavMeta<S>)
   ): Promise<void>;
-  go(target: number | PathOrHref, opts?: NavMeta): Promise<void>;
+  go(target: number | RoutePaths<R> | PathOrHref, opts?: NavMeta<S>): Promise<void>;
   /**
    * Use this to listen for route changes.
    * Returns an unsubscribe function.
    * @param listener The listener that receives a Resolved object.
    */
-  onResolve(listener: OnResolveListener<T>): () => void;
+  onResolve(listener: OnResolveListener<T, S>): () => void;
   /**
    * Initializes the router: Starts listening for events, resolves the current
    * route and calls the `onResolve` listeners.
@@ -48,7 +48,7 @@ export interface Router<T = any> {
   /**
    * Use this to wait for the current navigation to complete.
    */
-  resolution?: Promise<Resolved<T>>;
+  resolution?: Promise<Resolved<T, S>>;
   /**
    * Use this to render the current route (history and location).
    * @param defer A function that defers rendering and can be used to trigger multiple successive
@@ -57,17 +57,17 @@ export interface Router<T = any> {
   render(defer?: () => Promise<void>): Promise<void>;
 }
 
-export interface RouterConf<T = any> {
+export interface RouterConf<T = any, S = any, R extends RawRoutes = RawRoutes> {
   /**
    * The routes configuration. You can modify this object later.
    * Make sure, the current route is in place before you call `router.init()`.
    */
-  routes?: Routes<T>;
+  routes?: R & Routes<T, S>;
   /**
    * A fallback resolve funuction to use, if a route could not be found.
    * By default it redirects to the root path '/'.
    */
-  notFound?: Resolve<T>;
+  notFound?: Resolve<T, S>;
   /**
    * Whether the click handler for anchor elements shall not be installed.
    * This might make sense, if you want to take more control over how anchor
@@ -77,22 +77,22 @@ export interface RouterConf<T = any> {
   /**
    * A callback that is invoked whenever a route is resolved.
    */
-  onResolve?: OnResolveListener<T>;
+  onResolve?: OnResolveListener<T, S>;
 }
 
-export const createRouter = <T = any>({
-  routes = {},
+export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>({
+  routes = {} as R & Routes<T, S>,
   notFound = ({ go }) => go([]),
   noClick = false,
   onResolve,
-}: RouterConf<T> = {}): Router<T> => {
-  let _current: Resolved<T>;
-  const _listeners = new Set<OnResolveListener<T>>(
+}: RouterConf<T, S, R> = {}): Router<T, S, R> => {
+  let _current: Resolved<T, S>;
+  const _listeners = new Set<OnResolveListener<T, S>>(
     onResolve ? [onResolve] : []
   );
-  let resolution: Promise<Resolved<T>>;
+  let resolution: Promise<Resolved<T, S>>;
   let skipRender = false;
-  const r: Router<T> = {
+  const r: Router<T, S, R> = {
     routes,
     get current() {
       return _current.opts;
@@ -111,45 +111,50 @@ export const createRouter = <T = any>({
     },
     async go(
       target:
-        | PathOrHref
-        | StrictNavMeta
-        | ((prev: NavOpts) => NavMeta)
-        | number,
-      opts?: NavMeta
+        | number
+        | StrictNavMeta<S>
+        | ((prev: NavOpts<S>) => NavMeta<S>)
+        | RoutePaths<R>
+        | PathOrHref,
+      opts?: NavMeta<S>
     ): Promise<void> {
       // Serialize all navigaton requests
       const prevRes = await this.resolution;
-      if (typeof target === "function") {
+      let resolvedTarget: any = target;
+
+      if (typeof resolvedTarget === "function") {
         if (!prevRes)
           throw new Error(
             "Cannot call go() with a function before the first navigation has been started."
           );
-        target = {
+        resolvedTarget = {
           path: prevRes.opts.path,
           search: prevRes.opts.search,
           state: prevRes.opts.state,
           replace: true,
-          ...target(prevRes.opts),
+          ...resolvedTarget(prevRes.opts),
         };
       }
-      if (typeof target === "number") {
+
+      if (typeof resolvedTarget === "number") {
         const waiting = waitForPopState();
-        history.go(target);
+        history.go(resolvedTarget);
         await waiting;
         if (skipRender || opts?.skipRender) return;
         return resolveCurrent();
       }
+
       const navOpts =
-        target instanceof NavOpts
-          ? target
-          : typeof target === "string" || Array.isArray(target)
-          ? new NavOpts(target, opts)
-          : new NavOpts(target);
+        resolvedTarget instanceof NavOpts
+          ? resolvedTarget
+          : typeof resolvedTarget === "string" || Array.isArray(resolvedTarget)
+          ? new NavOpts<S>(resolvedTarget as PathOrHref, opts)
+          : new NavOpts<S>(resolvedTarget as StrictNavMeta<S>);
       if (navOpts.skipRender || skipRender) return updateState(navOpts);
       const res = await applyResolution(resolve(r.routes, navOpts, notFound));
       updateState(res.opts);
     },
-    onResolve(listener: OnResolveListener<T>) {
+    onResolve(listener: OnResolveListener<T, S>) {
       _listeners.add(listener);
       if (_current) listener(_current);
       return () => _listeners.delete(listener);
@@ -186,7 +191,7 @@ export const createRouter = <T = any>({
   const resolveCurrent = async (e?: PopStateEvent) => {
     const { href, origin } = window.location;
 
-    const initialOpts = new NavOpts(href.substring(origin.length), {
+    const initialOpts = new NavOpts<S>(href.substring(origin.length), {
       state: e ? e.state : history.state,
       pop: !!e,
     });
@@ -196,7 +201,7 @@ export const createRouter = <T = any>({
 
     if (opts !== initialOpts) {
       updateState(
-        new NavOpts(opts.path, {
+        new NavOpts<S>(opts.path, {
           replace: true,
           search: opts.search,
           state: opts.state,
@@ -205,7 +210,7 @@ export const createRouter = <T = any>({
     }
   };
 
-  const applyResolution = async (res: Promise<Resolved<T>>) => {
+  const applyResolution = async (res: Promise<Resolved<T, S>>) => {
     resolution = res;
     try {
       const resolved = await res;
@@ -217,7 +222,7 @@ export const createRouter = <T = any>({
     }
   };
 
-  const updateState = ({ state, replace, href }: NavOpts) => {
+  const updateState = ({ state, replace, href }: NavOpts<S>) => {
     if (replace) history.replaceState(state ?? null, "", href);
     else history.pushState(state ?? null, "", href);
   };

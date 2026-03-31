@@ -1,10 +1,10 @@
 export type PathOrHref = string | string[];
 
-export interface NavMeta {
+export interface NavMeta<S = any> {
   /** The search query object. */
   search?: Record<string, string>;
   /** The state to push. */
-  state?: any;
+  state?: S;
   /** The location hash. */
   hash?: string;
   /** Whethe the history state shall be replaced. */
@@ -19,7 +19,7 @@ export interface NavMeta {
   skipRender?: boolean;
 }
 
-export type StrictNavMeta = NavMeta &
+export type StrictNavMeta<S = any> = NavMeta<S> &
   (
     | {
         path: string[];
@@ -29,8 +29,8 @@ export type StrictNavMeta = NavMeta &
       }
   );
 
-export class NavOpts implements NavMeta {
-  readonly state?: any;
+export class NavOpts<S = any> implements NavMeta<S> {
+  readonly state?: S;
   readonly params: string[] = [];
   readonly hash?: string;
   readonly replace?: boolean;
@@ -40,9 +40,9 @@ export class NavOpts implements NavMeta {
   readonly pop?: boolean;
   private _h?: string;
 
-  constructor(target: StrictNavMeta);
-  constructor(target: PathOrHref, opts?: NavMeta);
-  constructor(target: PathOrHref | StrictNavMeta, opts: NavMeta = {}) {
+  constructor(target: StrictNavMeta<S>);
+  constructor(target: PathOrHref, opts?: NavMeta<S>);
+  constructor(target: PathOrHref | StrictNavMeta<S>, opts: NavMeta<S> = {}) {
     let { path, href, hash, pop, replace, search, state, skipRender } =
       typeof target === "string" || Array.isArray(target) ? opts : target;
     if (path) this.path = path;
@@ -79,8 +79,8 @@ export class NavOpts implements NavMeta {
   }
 
   get go() {
-    return (path: PathOrHref, opts: NavMeta = {}) =>
-      new NavOpts(path, {
+    return (path: PathOrHref, opts: NavMeta<S> = {}) =>
+      new NavOpts<S>(path, {
         search: opts.search,
         state: opts.state,
         replace: opts.replace ?? this.replace,
