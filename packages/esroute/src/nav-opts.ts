@@ -4,7 +4,7 @@ export interface NavMeta<S = any> {
   /** The search query object. */
   search?: Record<string, string>;
   /** The state to push. */
-  state?: S;
+  state?: S | null;
   /** The location hash. */
   hash?: string;
   /** Whethe the history state shall be replaced. */
@@ -30,7 +30,7 @@ export type StrictNavMeta<S = any> = NavMeta<S> &
   );
 
 export class NavOpts<S = any> implements NavMeta<S> {
-  readonly state!: S;
+  readonly state: S | null = null;
   readonly params: string[] = [];
   readonly hash?: string;
   readonly replace?: boolean;
@@ -63,7 +63,7 @@ export class NavOpts<S = any> implements NavMeta<S> {
     if (hash != null) this.hash = hash;
     if (pop != null) this.pop = pop;
     if (search != null) this.search = search;
-    if (state != null) this.state = state;
+    this.state = state ?? null;
     if (replace != null) this.replace = replace;
     if (skipRender != null) this.skipRender = skipRender;
     this.search ??= {};

@@ -239,8 +239,8 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
   };
 
   const updateState = ({ state, replace, href }: NavOpts<S>) => {
-    if (replace) history.replaceState(state ?? null, "", href);
-    else history.pushState(state ?? null, "", href);
+    if (replace) history.replaceState(state, "", href);
+    else history.pushState(state, "", href);
   };
 
   const waitForPopState = () => {
