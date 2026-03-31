@@ -9,5 +9,9 @@
     "sourceMap": true,
     "strict": true,
     "skipLibCheck": true
-  }
+  },
+  "references": [
+    { "path": "packages/esroute" },
+    { "path": "packages/esroute-lit" }
+  ]
 }
