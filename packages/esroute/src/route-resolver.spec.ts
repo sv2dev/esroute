@@ -34,35 +34,6 @@ describe("Resolver", () => {
     });
   });
 
-  describe("guards", () => {
-    const guard = vi.fn();
-    const index = vi.fn();
-
-    it("should resolve routes with guard returning anything but NavOpts", async () => {
-      const routes: Routes = { "?": guard, "": index };
-      guard.mockResolvedValue(true);
-
-      await resolve(routes, new NavOpts("/"), notFound);
-
-      expect(guard).toHaveBeenCalled();
-      expect(index).toHaveBeenCalled();
-    });
-
-    it("should redirect, if a guard returns NavOpts", async () => {
-      const routes: Routes = {
-        foo: { "?": guard, "": index },
-        bar: () => "foo",
-      };
-      guard.mockImplementation(({ go }) => go("/bar"));
-
-      const resolved = await resolve(routes, new NavOpts("/foo"), notFound);
-
-      expect(guard).toHaveBeenCalled();
-      expect(index).not.toHaveBeenCalled();
-      expect(resolved.value).toEqual("foo");
-    });
-  });
-
   describe("virtual routes", () => {
     const index = vi.fn();
 
@@ -131,6 +102,173 @@ describe("Resolver", () => {
       await resolve(routes, opts, notFound);
 
       expect(baz).toHaveBeenCalled();
+      expect(opts.params).toEqual(["bar"]);
+    });
+  });
+
+  describe("not found", () => {
+    it("should not resolve /x/y when only /y exists", async () => {
+      const y = vi.fn(() => "y");
+      const routes: Routes = { y };
+
+      const { value } = await resolve(routes, new NavOpts("/x/y"), notFound);
+
+      expect(y).not.toHaveBeenCalled();
+      expect(notFound).toHaveBeenCalled();
+    });
+
+    it("should not resolve /y when only /x/y exists", async () => {
+      const xy = vi.fn(() => "xy");
+      const routes: Routes = { x: { y: xy } };
+
+      const { value } = await resolve(routes, new NavOpts("/y"), notFound);
+
+      expect(xy).not.toHaveBeenCalled();
+      expect(notFound).toHaveBeenCalled();
+    });
+
+    it("should not skip intermediate unmatched segments", async () => {
+      const baz = vi.fn(() => "baz");
+      const routes: Routes = { foo: { bar: { baz } } };
+
+      await resolve(routes, new NavOpts("/foo/unknown/baz"), notFound);
+
+      expect(baz).not.toHaveBeenCalled();
+      expect(notFound).toHaveBeenCalled();
+    });
+
+    it("should call notFound for completely unknown paths", async () => {
+      const routes: Routes = { foo: () => "foo" };
+
+      await resolve(routes, new NavOpts("/bar"), notFound);
+
+      expect(notFound).toHaveBeenCalled();
+    });
+
+    it("should call notFound when path is longer than route tree", async () => {
+      const foo = vi.fn(() => "foo");
+      const routes: Routes = { foo };
+
+      await resolve(routes, new NavOpts("/foo/bar"), notFound);
+
+      expect(foo).not.toHaveBeenCalled();
+      expect(notFound).toHaveBeenCalled();
+    });
+  });
+
+  describe("guards", () => {
+    it("should resolve routes with guard returning anything but NavOpts", async () => {
+      const guard = vi.fn().mockResolvedValue(true);
+      const index = vi.fn();
+      const routes: Routes = { "?": guard, "": index };
+
+      await resolve(routes, new NavOpts("/"), notFound);
+
+      expect(guard).toHaveBeenCalled();
+      expect(index).toHaveBeenCalled();
+    });
+
+    it("should redirect, if a guard returns NavOpts", async () => {
+      const guard = vi.fn();
+      const index = vi.fn();
+      const routes: Routes = {
+        foo: { "?": guard, "": index },
+        bar: () => "foo",
+      };
+      guard.mockImplementation(({ go }) => go("/bar"));
+
+      const resolved = await resolve(routes, new NavOpts("/foo"), notFound);
+
+      expect(guard).toHaveBeenCalled();
+      expect(index).not.toHaveBeenCalled();
+      expect(resolved.value).toEqual("foo");
+    });
+
+    it("should call guard only once per level during traversal", async () => {
+      const guard = vi.fn().mockResolvedValue(true);
+      const handler = vi.fn(() => "result");
+      const routes: Routes = { "?": guard, foo: handler };
+
+      await resolve(routes, new NavOpts("/foo"), notFound);
+
+      expect(guard).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it("should check guards at each level of nested routes", async () => {
+      const rootGuard = vi.fn().mockResolvedValue(true);
+      const fooGuard = vi.fn().mockResolvedValue(true);
+      const handler = vi.fn(() => "result");
+      const routes: Routes = {
+        "?": rootGuard,
+        foo: { "?": fooGuard, bar: handler },
+      };
+
+      await resolve(routes, new NavOpts("/foo/bar"), notFound);
+
+      expect(rootGuard).toHaveBeenCalledTimes(1);
+      expect(fooGuard).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it("should short-circuit on guard redirect at intermediate level", async () => {
+      const rootGuard = vi.fn().mockResolvedValue(true);
+      const fooGuard = vi
+        .fn()
+        .mockImplementation(({ go }) => go("/other"));
+      const handler = vi.fn(() => "result");
+      const other = vi.fn(() => "other");
+      const routes: Routes = {
+        "?": rootGuard,
+        foo: { "?": fooGuard, bar: handler },
+        other,
+      };
+
+      const { value } = await resolve(
+        routes,
+        new NavOpts("/foo/bar"),
+        notFound
+      );
+
+      expect(rootGuard).toHaveBeenCalled();
+      expect(fooGuard).toHaveBeenCalled();
+      expect(handler).not.toHaveBeenCalled();
+      expect(value).toEqual("other");
+    });
+  });
+
+  describe("wildcards", () => {
+    it("should collect multiple wildcard params", async () => {
+      const handler = vi.fn();
+      const routes: Routes = { "*": { "*": handler } };
+      const opts = new NavOpts("/a/b");
+
+      await resolve(routes, opts, notFound);
+
+      expect(handler).toHaveBeenCalled();
+      expect(opts.params).toEqual(["a", "b"]);
+    });
+
+    it("should prefer exact match over wildcard", async () => {
+      const exact = vi.fn(() => "exact");
+      const wild = vi.fn(() => "wild");
+      const routes: Routes = { foo: exact, "*": wild };
+      const opts = new NavOpts("/foo");
+
+      const { value } = await resolve(routes, opts, notFound);
+
+      expect(value).toEqual("exact");
+      expect(wild).not.toHaveBeenCalled();
+    });
+
+    it("should use wildcard for unmatched segments", async () => {
+      const wild = vi.fn(() => "wild");
+      const routes: Routes = { foo: () => "foo", "*": wild };
+      const opts = new NavOpts("/bar");
+
+      const { value } = await resolve(routes, opts, notFound);
+
+      expect(value).toEqual("wild");
       expect(opts.params).toEqual(["bar"]);
     });
   });
