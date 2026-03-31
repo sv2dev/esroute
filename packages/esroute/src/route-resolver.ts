@@ -22,7 +22,7 @@ export const resolve = async <T, S = any>(
   notFound: Resolve<T, S>
 ): Promise<Resolved<T, S>> => {
   let value: NavOpts<S> | T = opts;
-  const navPath = new Array<NavOpts<S>>();
+  const navPath: NavOpts<S>[] = [];
   while (value instanceof NavOpts && navPath.length <= MAX_REDIRECTS) {
     opts = value;
     navPath.push(opts);

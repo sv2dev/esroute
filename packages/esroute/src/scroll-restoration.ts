@@ -32,14 +32,11 @@ export const restoreHandling = ({
       offset +
       container.scrollTop);
 
-  if (save) {
-    window.addEventListener("beforeunload", save);
-    window.addEventListener("visibilitychange", save);
-  }
+  window.addEventListener("beforeunload", save);
+  window.addEventListener("visibilitychange", save);
   window.addEventListener("popstate", () => set(getStatePos()));
   return ({ opts: { hash, pop } }: { opts: NavOpts }) => {
     const fromState = getStatePos();
-    console.log(location.pathname, pop, fromState);
     if (fromState) return set(fromState);
     if (!fromState && hash && getHashPos) return set(getHashPos(hash));
     container.scrollTop = 0;
