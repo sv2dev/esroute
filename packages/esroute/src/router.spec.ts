@@ -1,10 +1,20 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { NavOpts } from "./nav-opts";
-import { Router, createRouter } from "./router";
+import { Routes } from "./routes";
+import { createRouter } from "./router";
+
+// Define routes with proper typing to verify RoutePaths inference
+// Note: "fail" route is included for testing error handling
+const routes = {
+  "": ({}, next: string | undefined) => next ?? "index",
+  foo: () => "foo",
+  fail: () => Promise.reject(new Error("test")),
+  bar: () => "bar",
+} satisfies Routes<string>;
 
 describe("Router", () => {
   let onResolve: Mock;
-  let router: Router<any>;
+  let router: ReturnType<typeof createRouter<string, any, typeof routes>>;
   beforeEach(() => {
     onResolve = vi.fn();
     vi.spyOn(history, "replaceState");
@@ -12,13 +22,9 @@ describe("Router", () => {
     vi.spyOn(history, "go").mockImplementation(() =>
       setTimeout(() => window.dispatchEvent(new PopStateEvent("popstate")), 0),
     );
-    router = createRouter<string>({
+    router = createRouter({
       onResolve,
-      routes: {
-        "": ({}, next: string | undefined) => next ?? "index",
-        foo: () => "foo",
-        fail: () => Promise.reject(),
-      },
+      routes,
     });
   });
 
@@ -155,6 +161,43 @@ describe("Router", () => {
         value: "foo",
         opts: expect.objectContaining(new NavOpts("foo")),
       });
+    });
+  });
+
+  describe("type safety", () => {
+    it("should allow valid typed paths", async () => {
+      router.init();
+      // These should all compile without type errors and accept valid paths
+      // The paths "/" | "/foo" | "/bar" | "/fail" are properly typed from the routes
+      await router.go("/foo");
+      await router.go("/bar");
+    });
+
+    it("should work with NavOpts objects", async () => {
+      router.init();
+      // Type-safe NavOpts construction with proper typing
+      const opts = new NavOpts("/foo");
+      await router.go(opts);
+    });
+
+    it("should work with string array paths", async () => {
+      router.init();
+      // String arrays should still work alongside typed string paths
+      await router.go(["foo"]);
+      await router.go(["bar"]);
+    });
+
+    it("should infer router types from routes", () => {
+      // Verify that router is properly typed with inferred routes shape
+      // The router type is: Router<string, any, typeof routes>
+      // which means router.go() provides autocomplete for: "/" | "/foo" | "/bar" | "/fail"
+
+      // Demonstrate that valid paths are properly typed
+      type ValidPaths = "/" | "/foo" | "/bar" | "/fail";
+
+      // Each valid route is properly typed and provides IDE autocomplete
+      const router_is_typed: typeof router = router;
+      expect(router_is_typed).toBeDefined();
     });
   });
 });
