@@ -14,7 +14,7 @@ Those features may be the ones you are looking for.
 - [🌈 Framework agnostic](#-framework-agnostic)
 - [🧭 Concise navigation API](#-concise-navigation-api)
 - [🕹 Simple configuration](#-simple-configuration)
-- [✅ Typesafe value resolution](#-typesafe-value-resolution)
+- [✅ Typesafe navigation](#-typesafe-navigation)
 - [🏎 Fast startup and runtime](#-fast-startup-and-runtime)
 - [🛡 Route guards](#-route-guards)
 - [🦄 Virtual routes](#-virtual-routes)
@@ -90,7 +90,11 @@ const router = createRouter({
 });
 ```
 
-### ✅ Typesafe value resolution
+### ✅ Typesafe navigation
+
+The router provides end-to-end type safety for route navigation.
+
+#### Value resolution
 
 The router can be restricted to allow only certain resolution types.
 
@@ -103,6 +107,42 @@ const router = createRouter<string>({
   },
 });
 ```
+
+#### Route paths
+
+When you pass your routes using `satisfies Routes<T>`, the router infers all valid paths and restricts `go()` to only those paths, giving you autocomplete and catching typos at compile time:
+
+```ts
+const routes = {
+  "": () => "index",
+  foo: () => "foo",
+  bar: () => "bar",
+} satisfies Routes<string>;
+
+const router = createRouter({ routes });
+
+router.go("/foo"); // ✓
+router.go("/baz"); // TS Error: Argument of type '"/baz"' is not assignable
+```
+
+#### Typed state
+
+Route handlers can declare the history state type they require by typing the `NavOpts` parameter. When navigating to such a route, TypeScript enforces that you provide the correct state — and inside the handler, `state` is typed directly without null checks:
+
+```ts
+const routes = {
+  profile: (navOpts: NavOpts<{ userId: string }>) =>
+    loadProfile(navOpts.state.userId),
+} satisfies Routes<string>;
+
+const router = createRouter({ routes });
+
+router.go("/profile");                                  // TS Error: state required
+router.go("/profile", { state: { userId: "123" } });    // ✓
+router.go("/profile", { state: { userId: 42 } });       // TS Error: number is not string
+```
+
+State defaults to `null` when not provided, consistent with the History API. Routes without an explicit state type leave it as `null`.
 
 ### 🏎 Fast startup and runtime
 

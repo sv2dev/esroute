@@ -57,7 +57,7 @@ describe("NavOpts", () => {
       const href = "/foo/bar?a=b";
       const opts = new NavOpts(href, {});
 
-      expect("state" in opts).toBeFalsy();
+      expect(opts.state).toBeNull();
       expect("replace" in opts).toBeFalsy();
     });
 
@@ -116,11 +116,11 @@ describe("NavOpts", () => {
 
       expect(opts2.replace).toBe(true);
       expect(opts2.search).toEqual({});
-      expect(opts2.state).toBeUndefined();
+      expect(opts2.state).toBeNull();
     });
 
     it("should set new options", () => {
-      const opts1 = new NavOpts(["a", "b"], {
+      const opts1 = new NavOpts<number>(["a", "b"], {
         replace: true,
       });
       const opts2 = opts1.go("/a", {

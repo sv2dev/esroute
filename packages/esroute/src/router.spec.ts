@@ -1,24 +1,34 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { NavOpts } from "./nav-opts";
-import { Router, createRouter } from "./router";
+import { Routes } from "./routes";
+import { createRouter } from "./router";
+
+// Define routes with proper typing to verify RoutePaths inference
+// Note: "fail" route is included for testing error handling
+const routes = {
+  "": ({}, next: string | undefined) => next ?? "index",
+  foo: () => "foo",
+  fail: () => Promise.reject(new Error("test")),
+  bar: () => "bar",
+  x: {
+    "": ({ state }: NavOpts<{ a: boolean }>) => (state.a ? "b" : "c"),
+    y: () => "x",
+  },
+} satisfies Routes<string>;
 
 describe("Router", () => {
   let onResolve: Mock;
-  let router: Router<any>;
+  let router: ReturnType<typeof createRouter<string, any, typeof routes>>;
   beforeEach(() => {
     onResolve = vi.fn();
     vi.spyOn(history, "replaceState");
     vi.spyOn(history, "pushState");
     vi.spyOn(history, "go").mockImplementation(() =>
-      setTimeout(() => window.dispatchEvent(new PopStateEvent("popstate")), 0)
+      setTimeout(() => window.dispatchEvent(new PopStateEvent("popstate")), 0),
     );
     router = createRouter({
       onResolve,
-      routes: {
-        "": ({}, next) => next ?? "index",
-        foo: () => "foo",
-        fail: () => Promise.reject(),
-      },
+      routes,
     });
   });
 
@@ -57,9 +67,9 @@ describe("Router", () => {
 
   describe("go()", () => {
     it("should navigate to route and push state", async () => {
-      await router.go("/foo");
+      await router.go("/x", { state: { a: true } });
 
-      expect(history.pushState).toHaveBeenCalledWith(null, "", "/foo");
+      expect(history.pushState).toHaveBeenCalledWith({ a: true }, "", "/x");
     });
 
     it("should replace the state, if replace flag is set", async () => {
@@ -87,7 +97,7 @@ describe("Router", () => {
     });
 
     it("should replace the state by default, if target is a mapping funciton", async () => {
-      await router.go("/foo?a=b");
+      await router.go("/foo", { search: { a: "b" } });
       await router.go(() => ({ search: { a: "c" } }));
 
       expect(history.replaceState).toHaveBeenCalledWith(null, "", "/foo?a=c");
@@ -102,7 +112,7 @@ describe("Router", () => {
 
     it("should render only once, if render is called with defer function", async () => {
       await router.render(async () => {
-        await router.go("/baz");
+        await router.go(["baz"]);
         await router.go(-1);
         await router.go("/foo");
       });
@@ -155,6 +165,37 @@ describe("Router", () => {
         value: "foo",
         opts: expect.objectContaining(new NavOpts("foo")),
       });
+    });
+  });
+
+  describe("type safety", () => {
+    it("should allow valid typed paths", async () => {
+      router.init();
+      // These should all compile without type errors and accept valid paths
+      // The paths "/" | "/foo" | "/bar" | "/fail" are properly typed from the routes
+      await router.go("/foo");
+      await router.go("/bar");
+    });
+
+    it("should work with NavOpts objects", async () => {
+      router.init();
+      // Type-safe NavOpts construction with proper typing
+      const opts = new NavOpts("/foo");
+      await router.go(opts);
+    });
+
+    it("should work with string array paths", async () => {
+      router.init();
+      // String arrays should still work alongside typed string paths
+      await router.go(["foo"]);
+      await router.go(["bar"]);
+    });
+
+    it("should require state when the route handler declares a required state type", async () => {
+      router.init();
+      // /x requires state: { a: boolean } — omitting state is a type error (see go() test above)
+      // Providing the required state is valid:
+      await router.go("/x", { state: { a: true } });
     });
   });
 });
