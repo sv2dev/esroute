@@ -93,6 +93,6 @@ export type StateOf<F> = F extends (
  */
 export type NeedsState<F> = unknown extends StateOf<F>
   ? false
-  : StateOf<F> extends undefined
+  : StateOf<F> extends null | undefined
   ? false
   : true;

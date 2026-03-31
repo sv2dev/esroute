@@ -120,7 +120,7 @@ describe("NavOpts", () => {
     });
 
     it("should set new options", () => {
-      const opts1 = new NavOpts(["a", "b"], {
+      const opts1 = new NavOpts<number>(["a", "b"], {
         replace: true,
       });
       const opts2 = opts1.go("/a", {

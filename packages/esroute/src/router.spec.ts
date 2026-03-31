@@ -11,7 +11,7 @@ const routes = {
   fail: () => Promise.reject(new Error("test")),
   bar: () => "bar",
   x: {
-    "": ({ state }: NavOpts<{ a: boolean }>) => (state!.a ? "b" : "c"),
+    "": ({ state }: NavOpts<{ a: boolean }>) => (state.a ? "b" : "c"),
     y: () => "x",
   },
 } satisfies Routes<string>;

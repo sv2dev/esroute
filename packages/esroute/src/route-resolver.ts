@@ -21,8 +21,8 @@ export const resolve = async <T, S = any>(
   opts: NavOpts<S>,
   notFound: Resolve<T, S>
 ): Promise<Resolved<T, S>> => {
-  let value: NavOpts | T = opts;
-  const navPath = new Array<NavOpts>();
+  let value: NavOpts<S> | T = opts;
+  const navPath = new Array<NavOpts<S>>();
   while (value instanceof NavOpts && navPath.length <= MAX_REDIRECTS) {
     opts = value;
     navPath.push(opts);
@@ -45,7 +45,7 @@ export const resolve = async <T, S = any>(
 
 const getResolves = async (
   root: Routes,
-  opts: NavOpts
+  opts: NavOpts<any>
 ): Promise<Resolve[] | null> => {
   const { path, params } = opts;
   const resolves: Resolve[] = [];
@@ -81,7 +81,7 @@ const getResolves = async (
   return null;
 };
 
-const checkGuard = async (routes: Routes, opts: NavOpts) => {
+const checkGuard = async (routes: Routes, opts: NavOpts<any>) => {
   if (typeof routes["?"] === "function") {
     const guardResult = await routes["?"](opts);
     if (guardResult instanceof NavOpts) return guardResult;

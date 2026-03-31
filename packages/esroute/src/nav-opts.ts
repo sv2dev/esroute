@@ -29,8 +29,8 @@ export type StrictNavMeta<S = any> = NavMeta<S> &
       }
   );
 
-export class NavOpts<S = any> implements NavMeta<S> {
-  readonly state: S | null = null;
+export class NavOpts<S = null> implements NavMeta<S> {
+  readonly state: S;
   readonly params: string[] = [];
   readonly hash?: string;
   readonly replace?: boolean;
@@ -63,7 +63,7 @@ export class NavOpts<S = any> implements NavMeta<S> {
     if (hash != null) this.hash = hash;
     if (pop != null) this.pop = pop;
     if (search != null) this.search = search;
-    this.state = state ?? null;
+    this.state = (state ?? null) as S;
     if (replace != null) this.replace = replace;
     if (skipRender != null) this.skipRender = skipRender;
     this.search ??= {};
