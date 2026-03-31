@@ -1,6 +1,6 @@
 {
   "name": "@esroute/lit",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "A small efficient client-side routing library for lit, written in TypeScript.",
   "main": "dist/index.js",
   "sideEffects": false,
@@ -22,7 +22,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "esroute": "^0.12.1",
+    "esroute": "^0.12.2",
     "lit": "^3.1.1"
   }
 }

@@ -10,7 +10,8 @@ export type Resolve<T = any, S = any> = (
 ) => T | NavOpts<S> | Promise<T | NavOpts<S>>;
 
 export interface Routes<T = any, S = any> {
-  [k: string]: Routes<T, S> | Resolve<T, S>;
+  "?"?: Resolve<T, S>;
+  [k: string]: Routes<T, S> | Resolve<T, S> | undefined;
 }
 
 // Depth counter using a string to track recursion depth (max 10 levels)
