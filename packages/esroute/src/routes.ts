@@ -13,9 +13,9 @@ export interface Routes<T = any, S = any> {
   [k: string]: Routes<T, S> | Resolve<T, S>;
 }
 
-// Depth counter using a string to track recursion depth
+// Depth counter using a string to track recursion depth (max 10 levels)
 type Inc<T extends string> = `${T}x`;
-type IsMaxDepth<T extends string> = T extends `${"x" | "xx" | "xxx" | "xxxx" | "xxxxx" | "xxxxxx" | "xxxxxxx" | "xxxxxxxx" | "xxxxxxxxx" | "xxxxxxxxxx"}` ? true : false;
+type IsMaxDepth<T extends string> = T extends "xxxxxxxxxx" ? true : false;
 
 export type RoutePaths<
   R extends RawRoutes,

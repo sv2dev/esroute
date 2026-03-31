@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { NavOpts } from "./nav-opts";
 import { Routes } from "./routes";
 import { createRouter } from "./router";
+import { y } from "happy-dom/lib/PropertySymbol";
 
 // Define routes with proper typing to verify RoutePaths inference
 // Note: "fail" route is included for testing error handling
@@ -10,6 +11,9 @@ const routes = {
   foo: () => "foo",
   fail: () => Promise.reject(new Error("test")),
   bar: () => "bar",
+  x: {
+    y: () => "x",
+  },
 } satisfies Routes<string>;
 
 describe("Router", () => {
@@ -63,9 +67,9 @@ describe("Router", () => {
 
   describe("go()", () => {
     it("should navigate to route and push state", async () => {
-      await router.go("/foo");
+      await router.go("/x/y");
 
-      expect(history.pushState).toHaveBeenCalledWith(null, "", "/foo");
+      expect(history.pushState).toHaveBeenCalledWith(null, "", "/x/y");
     });
 
     it("should replace the state, if replace flag is set", async () => {
