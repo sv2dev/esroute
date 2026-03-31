@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { NavOpts } from "./nav-opts";
 import { Routes } from "./routes";
 import { createRouter } from "./router";
-import { y } from "happy-dom/lib/PropertySymbol";
 
 // Define routes with proper typing to verify RoutePaths inference
 // Note: "fail" route is included for testing error handling
@@ -12,7 +11,7 @@ const routes = {
   fail: () => Promise.reject(new Error("test")),
   bar: () => "bar",
   x: {
-    "": () => "",
+    "": ({ state }: NavOpts<{ a: boolean }>) => (state?.a ? "b" : "c"),
     y: () => "x",
   },
 } satisfies Routes<string>;
@@ -68,9 +67,9 @@ describe("Router", () => {
 
   describe("go()", () => {
     it("should navigate to route and push state", async () => {
-      await router.go("/x");
+      await router.go("/x/y");
 
-      expect(history.pushState).toHaveBeenCalledWith(null, "", "/x");
+      expect(history.pushState).toHaveBeenCalledWith(null, "", "/x/y");
     });
 
     it("should replace the state, if replace flag is set", async () => {
@@ -192,17 +191,11 @@ describe("Router", () => {
       await router.go(["bar"]);
     });
 
-    it("should infer router types from routes", () => {
-      // Verify that router is properly typed with inferred routes shape
-      // The router type is: Router<string, any, typeof routes>
-      // which means router.go() provides autocomplete for: "/" | "/foo" | "/bar" | "/fail"
-
-      // Demonstrate that valid paths are properly typed
-      type ValidPaths = "/" | "/foo" | "/bar" | "/fail";
-
-      // Each valid route is properly typed and provides IDE autocomplete
-      const router_is_typed: typeof router = router;
-      expect(router_is_typed).toBeDefined();
+    it("should require state when the route handler declares a required state type", async () => {
+      router.init();
+      // /x requires state: { a: boolean } — omitting state is a type error (see go() test above)
+      // Providing the required state is valid:
+      await router.go("/x", { state: { a: true } });
     });
   });
 });

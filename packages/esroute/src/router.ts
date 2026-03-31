@@ -1,6 +1,14 @@
 import { NavMeta, NavOpts, PathOrHref, StrictNavMeta } from "./nav-opts";
 import { Resolved, resolve } from "./route-resolver";
-import { Resolve, Routes, RoutePaths, RawRoutes } from "./routes";
+import {
+  Resolve,
+  Routes,
+  RoutePaths,
+  RawRoutes,
+  HandlerFor,
+  StateOf,
+  NeedsState,
+} from "./routes";
 
 export type OnResolveListener<T, S = any> = (resolved: Resolved<T, S>) => void;
 export interface Router<T = any, S = any, R extends RawRoutes = RawRoutes> {
@@ -29,7 +37,14 @@ export interface Router<T = any, S = any, R extends RawRoutes = RawRoutes> {
   go(
     target: number | StrictNavMeta<S> | ((prev: NavOpts<S>) => NavMeta<S>)
   ): Promise<void>;
-  go(target: number | RoutePaths<R> | string[], opts?: NavMeta<S>): Promise<void>;
+  /** Navigate to a typed route path, enforcing the required state type for that route. */
+  go<P extends RoutePaths<R>>(
+    target: P,
+    ...opts: NeedsState<HandlerFor<R, P>> extends true
+      ? [opts: NavMeta<StateOf<HandlerFor<R, P>>> & { state: StateOf<HandlerFor<R, P>> }]
+      : [opts?: NavMeta<StateOf<HandlerFor<R, P>>>]
+  ): Promise<void>;
+  go(target: string[], opts?: NavMeta<S>): Promise<void>;
   /**
    * Use this to listen for route changes.
    * Returns an unsubscribe function.
@@ -116,7 +131,7 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
         | ((prev: NavOpts<S>) => NavMeta<S>)
         | RoutePaths<R>
         | PathOrHref,
-      opts?: NavMeta<S>
+      opts?: NavMeta<any>
     ): Promise<void> {
       // Serialize all navigaton requests
       const prevRes = await this.resolution;
@@ -181,7 +196,8 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
       ? e.target
       : e.composedPath?.().find(isAnchorElement);
     if (target && target.origin === location.origin) {
-      r.go(target.href.substring(location.origin.length) as RoutePaths<R>, {
+      r.go({
+        href: target.href.substring(location.origin.length),
         replace: "replace" in target.dataset,
       });
       e.preventDefault();
