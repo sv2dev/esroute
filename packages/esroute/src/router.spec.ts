@@ -12,6 +12,7 @@ const routes = {
   fail: () => Promise.reject(new Error("test")),
   bar: () => "bar",
   x: {
+    "": () => "",
     y: () => "x",
   },
 } satisfies Routes<string>;
@@ -67,9 +68,9 @@ describe("Router", () => {
 
   describe("go()", () => {
     it("should navigate to route and push state", async () => {
-      await router.go("/x/y");
+      await router.go("/x");
 
-      expect(history.pushState).toHaveBeenCalledWith(null, "", "/x/y");
+      expect(history.pushState).toHaveBeenCalledWith(null, "", "/x");
     });
 
     it("should replace the state, if replace flag is set", async () => {

@@ -29,7 +29,7 @@ export type RoutePaths<
         : K extends ""
         ? R[K] extends RawRoutes
           ? RoutePaths<R[K], Prefix, Inc<D>>
-          : `${Prefix}/`
+          : Prefix extends "" ? "/" : Prefix
         : K extends "*"
         ? R[K] extends RawRoutes
           ? RoutePaths<R[K], `${Prefix}/${string}`, Inc<D>>
