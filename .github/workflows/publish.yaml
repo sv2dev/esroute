@@ -39,44 +39,28 @@ jobs:
           echo "core-changed=$core_changed" >> "$GITHUB_OUTPUT"
           echo "lit-changed=$lit_changed" >> "$GITHUB_OUTPUT"
 
-  publish-core:
-    name: Publish core package
+  publish:
+    name: Publish packages
     needs: check-version
-    if: needs.check-version.outputs.core-changed == 'true'
+    if: needs.check-version.outputs.core-changed == 'true' || needs.check-version.outputs.lit-changed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           registry-url: "https://registry.npmjs.org"
-      - run: |
-          npm install
+      - run: npm install
+      - name: Publish core package
+        if: needs.check-version.outputs.core-changed == 'true'
+        run: |
           cd packages/esroute
           npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  publish-lit:
-    name: Publish lit package
-    needs: check-version
-    if: needs.check-version.outputs.lit-changed == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          registry-url: "https://registry.npmjs.org"
-      - run: |
-          npm install
+      - name: Publish lit package
+        if: needs.check-version.outputs.lit-changed == 'true'
+        run: |
           cd packages/esroute-lit
           npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
