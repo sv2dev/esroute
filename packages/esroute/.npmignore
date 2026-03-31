@@ -1,6 +1,5 @@
 src
 tsconfig.json
-dist/**/*.map
 dist/**/*.spec.*
 demo
 *.tsbuildinfo
