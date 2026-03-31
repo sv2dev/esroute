@@ -10,7 +10,7 @@
   "homepage": "https://github.com/sv2dev/esroute/tree/main/packages/esroute",
   "scripts": {
     "build": "tsc -b",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.check.json",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

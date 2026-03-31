@@ -5,10 +5,10 @@ import { renderRoutes } from "./render-routes-directive";
 
 const router = createRouter<any>({
   routes: {
-    "": async ({}, next) => next ?? html`test`,
+    "": async ({}, next: any) => next ?? html`test`,
     foo: async () => html`foo`,
     bar: {
-      "": async ({}, next) => `bar ${next}`,
+      "": async ({}, next: any) => `bar ${next}`,
       baz: async () => `baz`,
     },
   },

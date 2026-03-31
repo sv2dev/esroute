@@ -10,12 +10,12 @@ describe("Router", () => {
     vi.spyOn(history, "replaceState");
     vi.spyOn(history, "pushState");
     vi.spyOn(history, "go").mockImplementation(() =>
-      setTimeout(() => window.dispatchEvent(new PopStateEvent("popstate")), 0)
+      setTimeout(() => window.dispatchEvent(new PopStateEvent("popstate")), 0),
     );
-    router = createRouter({
+    router = createRouter<string>({
       onResolve,
       routes: {
-        "": ({}, next) => next ?? "index",
+        "": ({}, next: string | undefined) => next ?? "index",
         foo: () => "foo",
         fail: () => Promise.reject(),
       },

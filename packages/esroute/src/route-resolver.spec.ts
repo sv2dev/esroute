@@ -150,11 +150,11 @@ describe("Resolver", () => {
     });
 
     it("should fail on too many redirects", async () => {
-      const navOpts = new NavOpts("/foo", { state: 1 });
+      const navOpts = new NavOpts<number>("/foo", { state: 1 });
 
       await expect(
         resolve(
-          { foo: ({ go, state }) => go("/foo", { state: state + 1 }) },
+          { foo: ({ go, state }) => go("/foo", { state: (state ?? 0) + 1 }) },
           navOpts,
           notFound
         )
