@@ -73,7 +73,7 @@ export class NavOpts<S = null> implements NavMeta<S> {
     if (!this._h) {
       const s = new URLSearchParams(this.search).toString();
       const p = `/${this.path!.join("/")}`;
-      this._h = `${p}${s ? `?${s}` : ""}`;
+      this._h = `${p}${s ? `?${s}` : ""}${this.hash ? `#${this.hash}` : ""}`;
     }
     return this._h;
   }

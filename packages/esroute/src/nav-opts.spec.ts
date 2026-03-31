@@ -97,6 +97,23 @@ describe("NavOpts", () => {
     });
   });
 
+  describe("href with hash", () => {
+    it("should include hash in href when constructed from path array", () => {
+      const opts = new NavOpts(["foo"], { hash: "section" });
+      expect(opts.href).toBe("/foo#section");
+    });
+
+    it("should include both search and hash in href", () => {
+      const opts = new NavOpts(["foo"], { search: { a: "b" }, hash: "top" });
+      expect(opts.href).toBe("/foo?a=b#top");
+    });
+
+    it("should include hash in href when constructed from StrictNavMeta", () => {
+      const opts = new NavOpts({ path: ["foo"], hash: "bar" });
+      expect(opts.href).toBe("/foo#bar");
+    });
+  });
+
   describe("go", () => {
     it("should create a new NavigateOpts instance with a new path", () => {
       const opts1 = new NavOpts(["a", "b"]);

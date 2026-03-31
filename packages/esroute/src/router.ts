@@ -221,6 +221,7 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
           replace: true,
           search: opts.search,
           state: opts.state,
+          hash: opts.hash,
         })
       );
     }
