@@ -55,10 +55,6 @@ const getResolves = async (
     if (!routes || typeof routes === "function") return null;
     const redirect = await checkGuard(routes, opts);
     if (redirect) return [() => redirect];
-    if (typeof routes["?"] === "function") {
-      const guardResult = await routes["?"](opts);
-      if (guardResult instanceof NavOpts) return [() => guardResult];
-    }
     const virtual: Routes | Resolve | void = routes[""];
     if (typeof virtual === "function") resolves.unshift(virtual);
     if (part in routes) routes = routes[part];
@@ -68,6 +64,8 @@ const getResolves = async (
     } else if (typeof virtual === "object") {
       routes = virtual;
       i--;
+    } else {
+      return null;
     }
   }
   do {
