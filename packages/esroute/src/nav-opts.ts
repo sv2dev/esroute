@@ -30,7 +30,7 @@ export type StrictNavMeta<S = any> = NavMeta<S> &
   );
 
 export class NavOpts<S = any> implements NavMeta<S> {
-  readonly state?: S;
+  readonly state!: S;
   readonly params: string[] = [];
   readonly hash?: string;
   readonly replace?: boolean;

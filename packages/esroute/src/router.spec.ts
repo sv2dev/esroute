@@ -11,7 +11,7 @@ const routes = {
   fail: () => Promise.reject(new Error("test")),
   bar: () => "bar",
   x: {
-    "": ({ state }: NavOpts<{ a: boolean }>) => (state?.a ? "b" : "c"),
+    "": ({ state }: NavOpts<{ a: boolean }>) => (state.a ? "b" : "c"),
     y: () => "x",
   },
 } satisfies Routes<string>;
@@ -67,9 +67,9 @@ describe("Router", () => {
 
   describe("go()", () => {
     it("should navigate to route and push state", async () => {
-      await router.go("/x/y");
+      await router.go("/x", { state: { a: true } });
 
-      expect(history.pushState).toHaveBeenCalledWith(null, "", "/x/y");
+      expect(history.pushState).toHaveBeenCalledWith({ a: true }, "", "/x");
     });
 
     it("should replace the state, if replace flag is set", async () => {
