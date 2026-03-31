@@ -49,13 +49,13 @@ const getResolves = async (
 ): Promise<Resolve[] | null> => {
   const { path, params } = opts;
   const resolves: Resolve[] = [];
-  let routes: Routes | Resolve | null = root;
+  let routes: Routes | Resolve | null | undefined = root;
   for (let i = 0; i < path.length; i++) {
     const part = path[i];
     if (!routes || typeof routes === "function") return null;
     const redirect = await checkGuard(routes, opts);
     if (redirect) return [() => redirect];
-    const virtual: Routes | Resolve | void = routes[""];
+    const virtual: Routes | Resolve | undefined = routes[""];
     if (typeof virtual === "function") resolves.unshift(virtual);
     if (part in routes) routes = routes[part];
     else if ("*" in routes) {
@@ -73,6 +73,7 @@ const getResolves = async (
       resolves.unshift(routes);
       return resolves;
     }
+    if (!routes) return null;
     const redirect = await checkGuard(routes, opts);
     if (redirect) return [() => redirect];
   } while ((routes = routes[""]));

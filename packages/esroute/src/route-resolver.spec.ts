@@ -273,6 +273,17 @@ describe("Resolver", () => {
     });
   });
 
+  describe("types", () => {
+    it("should not allow a route object as guard", () => {
+      // @ts-expect-error "?" must be a function, not a sub-routes object
+      const _routes: Routes = { "?": { foo: () => "foo" } };
+    });
+
+    it("should allow a function as guard", () => {
+      const _routes: Routes = { "?": () => undefined };
+    });
+  });
+
   describe("redirects", () => {
     it("should resolve a redirect via calling 'go()'", async () => {
       const navOpts = new NavOpts("/foo");
