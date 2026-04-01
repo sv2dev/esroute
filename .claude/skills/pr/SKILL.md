@@ -20,6 +20,8 @@ Run in parallel:
 
 If `git log main..HEAD` is empty, tell the user there's nothing to PR and stop.
 
+If there are uncommitted changes in `src/` (shown by `git status`), commit them automatically using the commit skill before proceeding — they're part of the work being PR'd.
+
 ### 2. Detect a version bump (release PR)
 
 Check whether any commit on this branch touched a `package.json` version field:
@@ -158,6 +160,6 @@ After `gh pr create` succeeds, show the user the URL.
 
 ## Guidelines
 
-- If there are uncommitted changes in `src/`, ask the user whether to commit them first or proceed with just the pushed commits.
+- Uncommitted source changes are always committed automatically — don't ask.
 - Never bump version numbers — that's handled separately before invoking this skill.
 - Don't add changelog entries for `test:`, `ci:`, `build:`, or `chore:` commits unless they change observable behavior.
