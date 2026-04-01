@@ -197,5 +197,11 @@ describe("Router", () => {
       // Providing the required state is valid:
       await router.go("/x", { state: { a: true } });
     });
+
+    it("should not allow state when the route handler declares no state type", async () => {
+      router.init();
+      // @ts-expect-error - /foo has no state type, passing state should be a type error
+      await router.go("/foo", { state: { a: true } });
+    });
   });
 });

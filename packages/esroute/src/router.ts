@@ -42,7 +42,7 @@ export interface Router<T = any, S = any, R extends RawRoutes = RawRoutes> {
     target: P,
     ...opts: NeedsState<HandlerFor<R, P>> extends true
       ? [opts: NavMeta<StateOf<HandlerFor<R, P>>> & { state: StateOf<HandlerFor<R, P>> }]
-      : [opts?: NavMeta<StateOf<HandlerFor<R, P>>>]
+      : [opts?: Omit<NavMeta<StateOf<HandlerFor<R, P>>>, "state">]
   ): Promise<void>;
   go(target: string[], opts?: NavMeta<S>): Promise<void>;
   /**
