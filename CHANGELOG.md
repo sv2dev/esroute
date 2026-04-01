@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-04-02
+
 ### Fixed
 - `router.go()` no longer exposes the `state` option for routes where no state type is declared, preventing accidental state passing on untyped routes
 
