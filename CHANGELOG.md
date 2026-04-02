@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Anchor click handler now ignores modifier keys (Ctrl, Meta, Shift, Alt), non-left clicks, and links with a `target` attribute (e.g. `target="_blank"`), allowing native browser behavior for opening links in new tabs/windows
+
 ## [0.12.3] - 2026-04-02
 
 ### Fixed
