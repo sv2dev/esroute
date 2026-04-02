@@ -11,6 +11,7 @@
       "default": "./dist/index.js"
     }
   },
+  "files": ["dist", "LICENSE", "README.md"],
   "sideEffects": false,
   "license": "MIT",
   "author": "Sven Rogge <mail@sven-rogge.com>",
