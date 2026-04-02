@@ -7,7 +7,7 @@ export interface NavMeta<S = any> {
   state?: S | null;
   /** The location hash. */
   hash?: string;
-  /** Whethe the history state shall be replaced. */
+  /** Whether the history state shall be replaced. */
   replace?: boolean;
   /** Whether the resolution was triggered by a popstate event. */
   pop?: boolean;
@@ -50,7 +50,7 @@ export class NavOpts<S = null> implements NavMeta<S> {
       href ??= target as string;
       if (!href.startsWith("/")) href = `/${href}`;
       if (!search) this._h = href;
-      const [, pathString, , searchString, , hash] = href.match(
+      const [, pathString, , searchString, , parsedHash] = href.match(
         /([^?#]+)(\?([^#]+))?(#(.+))?/
       )!;
       this.path = pathString.split("/").filter(Boolean);
@@ -58,7 +58,7 @@ export class NavOpts<S = null> implements NavMeta<S> {
         this.search = Object.fromEntries(
           new URLSearchParams(searchString).entries()
         );
-      if (hash) this.hash = hash;
+      if (parsedHash) this.hash = parsedHash;
     } else this.path = target as string[];
     if (hash != null) this.hash = hash;
     if (pop != null) this.pop = pop;

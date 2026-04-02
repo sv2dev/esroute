@@ -63,6 +63,39 @@ describe("Router", () => {
         opts: expect.any(NavOpts),
       });
     });
+
+    it("should not intercept clicks with modifier keys", async () => {
+      router.init();
+      await router.resolution;
+      onResolve.mockClear();
+      const anchor = document.createElement("a");
+      document.body.appendChild(anchor);
+      anchor.href = "http://localhost/foo";
+      vi.spyOn(location, "origin", "get").mockReturnValue("http://localhost");
+
+      for (const key of ["ctrlKey", "metaKey", "shiftKey", "altKey"] as const) {
+        anchor.dispatchEvent(new MouseEvent("click", { [key]: true, bubbles: true }));
+      }
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(onResolve).not.toHaveBeenCalled();
+    });
+
+    it("should not intercept clicks on anchors with target attribute", async () => {
+      router.init();
+      await router.resolution;
+      onResolve.mockClear();
+      const anchor = document.createElement("a");
+      document.body.appendChild(anchor);
+      anchor.href = "http://localhost/foo";
+      anchor.target = "_blank";
+      vi.spyOn(location, "origin", "get").mockReturnValue("http://localhost");
+
+      anchor.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(onResolve).not.toHaveBeenCalled();
+    });
   });
 
   describe("go()", () => {

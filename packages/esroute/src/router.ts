@@ -192,15 +192,28 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
   };
 
   const linkClickListener = (e: MouseEvent) => {
+    if (
+      e.defaultPrevented ||
+      e.button !== 0 ||
+      e.metaKey ||
+      e.ctrlKey ||
+      e.shiftKey ||
+      e.altKey
+    )
+      return;
     const target = isAnchorElement(e.target)
       ? e.target
       : e.composedPath?.().find(isAnchorElement);
-    if (target && target.origin === location.origin) {
+    if (
+      target &&
+      (!target.target || target.target === "_self") &&
+      target.origin === location.origin
+    ) {
+      e.preventDefault();
       r.go({
         href: target.href.substring(location.origin.length),
         replace: "replace" in target.dataset,
       });
-      e.preventDefault();
     }
   };
 
