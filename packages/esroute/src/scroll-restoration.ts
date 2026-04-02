@@ -25,12 +25,12 @@ export const restoreHandling = ({
   };
   const getStatePos = () =>
     (history.state && history.state[stateProp]) ?? undefined;
-  const getHashPos =
-    hashScroll &&
-    ((hash: string) =>
-      (find(hash)?.getBoundingClientRect().top ?? 0) -
-      offset +
-      container.scrollTop);
+  const getHashPos = hashScroll
+    ? (hash: string) =>
+        (find(hash)?.getBoundingClientRect().top ?? 0) -
+        offset +
+        container.scrollTop
+    : undefined;
 
   window.addEventListener("beforeunload", save);
   document.addEventListener("visibilitychange", save);
