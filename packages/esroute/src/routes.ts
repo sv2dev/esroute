@@ -1,4 +1,4 @@
-import { NavOpts } from "./nav-opts";
+import { NavOpts } from "./nav-opts.js";
 
 export type RawRoutes = {
   [k: string]: RawRoutes | ((...args: any[]) => any);

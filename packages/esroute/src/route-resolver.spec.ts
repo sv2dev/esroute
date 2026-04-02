@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { NavOpts } from "./nav-opts";
-import { resolve } from "./route-resolver";
-import { Routes } from "./routes";
+import { NavOpts } from "./nav-opts.js";
+import { resolve } from "./route-resolver.js";
+import { Routes } from "./routes.js";
 
 describe("Resolver", () => {
   const notFound = vi.fn();

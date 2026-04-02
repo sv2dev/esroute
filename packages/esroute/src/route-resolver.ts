@@ -1,5 +1,5 @@
-import { NavOpts } from "./nav-opts";
-import { Resolve, Routes } from "./routes";
+import { NavOpts } from "./nav-opts.js";
+import { Resolve, Routes } from "./routes.js";
 
 export interface Resolved<T, S = any> {
   /** The resolved value of the route. */

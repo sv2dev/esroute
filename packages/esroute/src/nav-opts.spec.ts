@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NavOpts } from "./nav-opts";
+import { NavOpts } from "./nav-opts.js";
 
 describe("NavOpts", () => {
   describe("properties", () => {
