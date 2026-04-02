@@ -1,6 +1,6 @@
 {
   "name": "@esroute/lit",
-  "version": "0.12.3",
+  "version": "0.12.4",
   "description": "A small efficient client-side routing library for lit, written in TypeScript.",
   "type": "module",
   "types": "dist/index.d.ts",
@@ -11,6 +11,7 @@
       "default": "./dist/index.js"
     }
   },
+  "files": ["dist", "LICENSE", "README.md"],
   "sideEffects": false,
   "license": "MIT",
   "author": "Sven Rogge <mail@sven-rogge.com>",
