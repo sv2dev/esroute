@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     "target": "es2019",
-    "module": "esnext",
+    "module": "node16",
     "moduleDetection": "force",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node16",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,

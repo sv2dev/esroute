@@ -1,4 +1,4 @@
-import { NavOpts } from "./nav-opts";
+import { NavOpts } from "./nav-opts.js";
 
 export const restoreHandling = ({
   container = document.scrollingElement ?? document.body,

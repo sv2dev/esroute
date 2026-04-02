@@ -1,5 +1,5 @@
-import { NavMeta, NavOpts, PathOrHref, StrictNavMeta } from "./nav-opts";
-import { Resolved, resolve } from "./route-resolver";
+import { NavMeta, NavOpts, PathOrHref, StrictNavMeta } from "./nav-opts.js";
+import { Resolved, resolve } from "./route-resolver.js";
 import {
   Resolve,
   Routes,
@@ -8,7 +8,7 @@ import {
   HandlerFor,
   StateOf,
   NeedsState,
-} from "./routes";
+} from "./routes.js";
 
 export type OnResolveListener<T, S = any> = (resolved: Resolved<T, S>) => void;
 export interface Router<T = any, S = any, R extends RawRoutes = RawRoutes> {
@@ -97,7 +97,7 @@ export interface RouterConf<T = any, S = any, R extends RawRoutes = RawRoutes> {
 
 export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>({
   routes = {} as R & Routes<T, S>,
-  notFound = ({ go }) => go([]),
+  notFound = ({ go }: NavOpts<S>) => go([]),
   noClick = false,
   onResolve,
 }: RouterConf<T, S, R> = {}): Router<T, S, R> => {

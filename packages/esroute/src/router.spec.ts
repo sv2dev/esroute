@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
-import { NavOpts } from "./nav-opts";
-import { Routes } from "./routes";
-import { createRouter } from "./router";
+import { NavOpts } from "./nav-opts.js";
+import { Routes } from "./routes.js";
+import { createRouter } from "./router.js";
 
 // Define routes with proper typing to verify RoutePaths inference
 // Note: "fail" route is included for testing error handling

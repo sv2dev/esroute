@@ -1,7 +1,7 @@
 import { createRouter } from "esroute";
 import { html, render } from "lit";
 import { beforeEach, describe, expect, it } from "vitest";
-import { renderRoutes } from "./render-routes-directive";
+import { renderRoutes } from "./render-routes-directive.js";
 
 const router = createRouter<any>({
   routes: {

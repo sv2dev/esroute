@@ -1,9 +1,16 @@
 {
   "name": "esroute",
-  "version": "0.12.2",
+  "version": "0.12.3",
   "description": "A small efficient framework-agnostic client-side routing library, written in TypeScript.",
+  "type": "module",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "sideEffects": false,
   "license": "MIT",
   "author": "Sven Rogge <mail@sven-rogge.com>",
