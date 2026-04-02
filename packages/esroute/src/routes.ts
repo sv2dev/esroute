@@ -11,7 +11,7 @@ export type Resolve<T = any, S = any> = (
 
 export interface Routes<T = any, S = any> {
   "?"?: Resolve<T, S>;
-  [k: string]: Routes<T, S> | Resolve<T, S> | undefined;
+  [k: string]: Routes<T, any> | Resolve<T, any> | undefined;
 }
 
 // Depth counter using a string to track recursion depth (max 10 levels)
@@ -64,6 +64,12 @@ type _NavigateRoutes<R extends RawRoutes, Parts extends string[]> =
         ? _NavigateRoutes<R[First], Rest>
         : Rest extends []
         ? R[First]
+        : never
+      : "*" extends keyof R
+      ? R["*"] extends RawRoutes
+        ? _NavigateRoutes<R["*"], Rest>
+        : Rest extends []
+        ? R["*"]
         : never
       : never
     : never;
