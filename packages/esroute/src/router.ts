@@ -6,23 +6,32 @@ import {
   RoutePaths,
   RawRoutes,
   HandlerFor,
-  StateOf,
-  NeedsState,
+  NavMetaFor,
+  NeedsNavMeta,
 } from "./routes.js";
 
-export type OnResolveListener<T, S = any> = (resolved: Resolved<T, S>) => void;
-export interface Router<T = any, S = any, R extends RawRoutes = RawRoutes> {
+export type OnResolveListener<
+  T,
+  S = never,
+  Search extends Record<string, string> = Record<string, string>
+> = (resolved: Resolved<T, S, Search>) => void;
+export interface Router<
+  T = any,
+  S = never,
+  R extends RawRoutes = RawRoutes,
+  Search extends Record<string, string> = Record<string, string>
+> {
   /**
    * The routes configuration.
    * You may modify this object to change the routes.
    * Be sure to call `router.init()` after the current route is configured.
    */
-  routes: Routes<T, S>;
+  routes: Routes<T, S, Search>;
   /**
    * The current resolved route.
    * It is updated after each route resolution.
    */
-  readonly current: NavOpts<S>;
+  readonly current: NavOpts<S, Search>;
   /**
    * Triggers a navigation.
    * You can modify the navigation options by passing in a second argument.
@@ -35,22 +44,25 @@ export interface Router<T = any, S = any, R extends RawRoutes = RawRoutes> {
    * @param opts The navigation metadata.
    */
   go(
-    target: number | StrictNavMeta<S> | ((prev: NavOpts<S>) => NavMeta<S>)
+    target:
+      | number
+      | StrictNavMeta<S, Search>
+      | ((prev: NavOpts<S, Search>) => NavMeta<S, Search>)
   ): Promise<void>;
-  /** Navigate to a typed route path, enforcing the required state type for that route. */
+  /** Navigate to a typed route path, enforcing the required meta for that route. */
   go<P extends RoutePaths<R>>(
     target: P,
-    ...opts: NeedsState<HandlerFor<R, P>> extends true
-      ? [opts: NavMeta<StateOf<HandlerFor<R, P>>> & { state: StateOf<HandlerFor<R, P>> }]
-      : [opts?: Omit<NavMeta<StateOf<HandlerFor<R, P>>>, "state">]
+    ...opts: NeedsNavMeta<HandlerFor<R, P>> extends true
+      ? [opts: NavMetaFor<HandlerFor<R, P>>]
+      : [opts?: NavMetaFor<HandlerFor<R, P>>]
   ): Promise<void>;
-  go(target: string[], opts?: NavMeta<S>): Promise<void>;
+  go(target: string[], opts?: NavMeta<S, Search>): Promise<void>;
   /**
    * Use this to listen for route changes.
    * Returns an unsubscribe function.
    * @param listener The listener that receives a Resolved object.
    */
-  onResolve(listener: OnResolveListener<T, S>): () => void;
+  onResolve(listener: OnResolveListener<T, S, Search>): () => void;
   /**
    * Initializes the router: Starts listening for events, resolves the current
    * route and calls the `onResolve` listeners.
@@ -63,7 +75,7 @@ export interface Router<T = any, S = any, R extends RawRoutes = RawRoutes> {
   /**
    * Use this to wait for the current navigation to complete.
    */
-  resolution?: Promise<Resolved<T, S>>;
+  resolution?: Promise<Resolved<T, S, Search>>;
   /**
    * Use this to render the current route (history and location).
    * @param defer A function that defers rendering and can be used to trigger multiple successive
@@ -72,17 +84,22 @@ export interface Router<T = any, S = any, R extends RawRoutes = RawRoutes> {
   render(defer?: () => Promise<void>): Promise<void>;
 }
 
-export interface RouterConf<T = any, S = any, R extends RawRoutes = RawRoutes> {
+export interface RouterConf<
+  T = any,
+  S = never,
+  R extends RawRoutes = RawRoutes,
+  Search extends Record<string, string> = Record<string, string>
+> {
   /**
    * The routes configuration. You can modify this object later.
    * Make sure, the current route is in place before you call `router.init()`.
    */
-  routes?: R & Routes<T, S>;
+  routes?: R & Routes<T, S, Search>;
   /**
    * A fallback resolve funuction to use, if a route could not be found.
    * By default it redirects to the root path '/'.
    */
-  notFound?: Resolve<T, S>;
+  notFound?: Resolve<T, S, Search>;
   /**
    * Whether the click handler for anchor elements shall not be installed.
    * This might make sense, if you want to take more control over how anchor
@@ -92,22 +109,27 @@ export interface RouterConf<T = any, S = any, R extends RawRoutes = RawRoutes> {
   /**
    * A callback that is invoked whenever a route is resolved.
    */
-  onResolve?: OnResolveListener<T, S>;
+  onResolve?: OnResolveListener<T, S, Search>;
 }
 
-export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>({
-  routes = {} as R & Routes<T, S>,
-  notFound = ({ go }: NavOpts<S>) => go([]),
+export const createRouter = <
+  T = any,
+  S = never,
+  R extends RawRoutes = RawRoutes,
+  Search extends Record<string, string> = Record<string, string>
+>({
+  routes = {} as R & Routes<T, S, Search>,
+  notFound = ({ go }: NavOpts<S, Search>) => go([]),
   noClick = false,
   onResolve,
-}: RouterConf<T, S, R> = {}): Router<T, S, R> => {
-  let _current: Resolved<T, S>;
-  const _listeners = new Set<OnResolveListener<T, S>>(
+}: RouterConf<T, S, R, Search> = {}): Router<T, S, R, Search> => {
+  let _current: Resolved<T, S, Search>;
+  const _listeners = new Set<OnResolveListener<T, S, Search>>(
     onResolve ? [onResolve] : []
   );
-  let resolution: Promise<Resolved<T, S>>;
+  let resolution: Promise<Resolved<T, S, Search>>;
   let skipRender = false;
-  const r: Router<T, S, R> = {
+  const r: Router<T, S, R, Search> = {
     routes,
     get current() {
       return _current.opts;
@@ -127,11 +149,11 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
     async go(
       target:
         | number
-        | StrictNavMeta<S>
-        | ((prev: NavOpts<S>) => NavMeta<S>)
+        | StrictNavMeta<S, Search>
+        | ((prev: NavOpts<S, Search>) => NavMeta<S, Search>)
         | RoutePaths<R>
         | PathOrHref,
-      opts?: NavMeta<any>
+      opts?: NavMeta<any, any>
     ): Promise<void> {
       // Serialize all navigaton requests
       const prevRes = await this.resolution;
@@ -163,13 +185,13 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
         resolvedTarget instanceof NavOpts
           ? resolvedTarget
           : typeof resolvedTarget === "string" || Array.isArray(resolvedTarget)
-          ? new NavOpts<S>(resolvedTarget as PathOrHref, opts)
-          : new NavOpts<S>(resolvedTarget as StrictNavMeta<S>);
+          ? new NavOpts<S, Search>(resolvedTarget as PathOrHref, opts)
+          : new NavOpts<S, Search>(resolvedTarget as StrictNavMeta<S, Search>);
       if (navOpts.skipRender || skipRender) return updateState(navOpts);
       const res = await applyResolution(resolve(r.routes, navOpts, notFound));
       updateState(res.opts);
     },
-    onResolve(listener: OnResolveListener<T, S>) {
+    onResolve(listener: OnResolveListener<T, S, Search>) {
       _listeners.add(listener);
       if (_current) listener(_current);
       return () => _listeners.delete(listener);
@@ -220,7 +242,7 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
   const resolveCurrent = async (e?: PopStateEvent) => {
     const { href, origin } = window.location;
 
-    const initialOpts = new NavOpts<S>(href.substring(origin.length), {
+    const initialOpts = new NavOpts<S, Search>(href.substring(origin.length), {
       state: e ? e.state : history.state,
       pop: !!e,
     });
@@ -230,7 +252,7 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
 
     if (opts !== initialOpts) {
       updateState(
-        new NavOpts<S>(opts.path, {
+        new NavOpts<S, Search>(opts.path, {
           replace: true,
           search: opts.search,
           state: opts.state,
@@ -240,7 +262,7 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
     }
   };
 
-  const applyResolution = async (res: Promise<Resolved<T, S>>) => {
+  const applyResolution = async (res: Promise<Resolved<T, S, Search>>) => {
     resolution = res;
     try {
       const resolved = await res;
@@ -252,7 +274,7 @@ export const createRouter = <T = any, S = any, R extends RawRoutes = RawRoutes>(
     }
   };
 
-  const updateState = ({ state, replace, href }: NavOpts<S>) => {
+  const updateState = ({ state, replace, href }: NavOpts<S, Search>) => {
     if (replace) history.replaceState(state, "", href);
     else history.pushState(state, "", href);
   };

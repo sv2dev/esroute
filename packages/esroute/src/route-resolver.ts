@@ -1,28 +1,40 @@
 import { NavOpts } from "./nav-opts.js";
 import { Resolve, Routes } from "./routes.js";
 
-export interface Resolved<T, S = any> {
+export interface Resolved<
+  T,
+  S = never,
+  Search extends Record<string, string> = Record<never, never>
+> {
   /** The resolved value of the route. */
   value: T;
   /** The final navigation options after all redirecting. */
-  opts: NavOpts<S>;
+  opts: NavOpts<S, Search>;
 }
 
-export type RouteResolver<T, S = any> = (
-  routes: Routes<T, S>,
-  opts: NavOpts<S>,
-  notFound: Resolve<T, S>
-) => Promise<Resolved<T, S>>;
+export type RouteResolver<
+  T,
+  S = never,
+  Search extends Record<string, string> = Record<never, never>
+> = (
+  routes: Routes<T, S, Search>,
+  opts: NavOpts<S, Search>,
+  notFound: Resolve<T, S, Search>
+) => Promise<Resolved<T, S, Search>>;
 
 const MAX_REDIRECTS = 10;
 
-export const resolve = async <T, S = any>(
-  routes: Routes<T, S>,
-  opts: NavOpts<S>,
-  notFound: Resolve<T, S>
-): Promise<Resolved<T, S>> => {
-  let value: NavOpts<S> | T = opts;
-  const navPath: NavOpts<S>[] = [];
+export const resolve = async <
+  T,
+  S = never,
+  Search extends Record<string, string> = Record<never, never>
+>(
+  routes: Routes<T, S, Search>,
+  opts: NavOpts<S, Search>,
+  notFound: Resolve<T, S, Search>
+): Promise<Resolved<T, S, Search>> => {
+  let value: NavOpts<S, Search> | T = opts;
+  const navPath: NavOpts<S, Search>[] = [];
   while (value instanceof NavOpts && navPath.length <= MAX_REDIRECTS) {
     opts = value;
     navPath.push(opts);
@@ -44,18 +56,25 @@ export const resolve = async <T, S = any>(
 };
 
 const getResolves = async (
-  root: Routes,
-  opts: NavOpts<any>
-): Promise<Resolve[] | null> => {
+  root: Routes<any, any, any>,
+  opts: NavOpts<any, any>
+): Promise<Resolve<any, any, any>[] | null> => {
   const { path, params } = opts;
-  const resolves: Resolve[] = [];
-  let routes: Routes | Resolve | null | undefined = root;
+  const resolves: Resolve<any, any, any>[] = [];
+  let routes:
+    | Routes<any, any, any>
+    | Resolve<any, any, any>
+    | null
+    | undefined = root;
   for (let i = 0; i < path.length; i++) {
     const part = path[i];
     if (!routes || typeof routes === "function") return null;
     const redirect = await checkGuard(routes, opts);
     if (redirect) return [() => redirect];
-    const virtual: Routes | Resolve | undefined = routes[""];
+    const virtual:
+      | Routes<any, any, any>
+      | Resolve<any, any, any>
+      | undefined = routes[""];
     if (typeof virtual === "function") resolves.unshift(virtual);
     if (part in routes) routes = routes[part];
     else if ("*" in routes) {
@@ -80,7 +99,10 @@ const getResolves = async (
   return null;
 };
 
-const checkGuard = async (routes: Routes, opts: NavOpts<any>) => {
+const checkGuard = async (
+  routes: Routes<any, any, any>,
+  opts: NavOpts<any, any>
+) => {
   if (typeof routes["?"] === "function") {
     const guardResult = await routes["?"](opts);
     if (guardResult instanceof NavOpts) return guardResult;
