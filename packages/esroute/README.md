@@ -125,24 +125,36 @@ router.go("/foo"); // ✓
 router.go("/baz"); // TS Error: Argument of type '"/baz"' is not assignable
 ```
 
-#### Typed state
+#### Typed state and search
 
-Route handlers can declare the history state type they require by typing the `NavOpts` parameter. When navigating to such a route, TypeScript enforces that you provide the correct state — and inside the handler, `state` is typed directly without null checks:
+Route handlers can declare the history state and search params they require with `route()`. When navigating to such a route, TypeScript enforces that you provide the correct metadata:
 
 ```ts
 const routes = {
-  profile: (navOpts: NavOpts<{ userId: string }>) =>
-    loadProfile(navOpts.state.userId),
+  profile: route<{
+    state: { userId: string };
+    search: { tab: string };
+  }>(({ state, search }) => loadProfile(state.userId, search.tab)),
 } satisfies Routes<string>;
 
 const router = createRouter({ routes });
 
-router.go("/profile");                                  // TS Error: state required
-router.go("/profile", { state: { userId: "123" } });    // ✓
-router.go("/profile", { state: { userId: 42 } });       // TS Error: number is not string
+router.go("/profile"); // TS Error: state and search required
+router.go("/profile", {
+  state: { userId: "123" },
+  search: { tab: "settings" },
+}); // ✓
+router.go("/profile", { state: { userId: 42 } }); // TS Error
 ```
 
-State defaults to `null` when not provided, consistent with the History API. Routes without an explicit state type leave it as `null`.
+The equivalent explicit handler type is:
+
+```ts
+profile: ({ state, search }: NavOpts<{ userId: string }, { tab: string }>) =>
+  loadProfile(state.userId, search.tab),
+```
+
+At runtime, state defaults to `null` when not provided, consistent with the History API.
 
 ### 🏎 Fast startup and runtime
 

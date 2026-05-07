@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { NavOpts } from "./nav-opts.js";
-import { Routes } from "./routes.js";
+import { route, Routes } from "./routes.js";
 import { createRouter } from "./router.js";
 
 // Define routes with proper typing to verify RoutePaths inference
@@ -10,9 +10,15 @@ const routes = {
   foo: () => "foo",
   fail: () => Promise.reject(new Error("test")),
   bar: () => "bar",
+  "some-route": route<{
+    state: { foo: number };
+    search: { bar: string };
+  }>(({ state: { foo }, search: { bar } }) => `${foo}:${bar}`),
+  baz: ({ go }) => go("/non-existing"), // should fail
   x: {
     "": ({ state }: NavOpts<{ a: boolean }>) => (state.a ? "b" : "c"),
-    y: () => "x",
+    y: ({ state }: NavOpts<number>) => state.toString(),
+    "*": ({ state }: NavOpts<string>) => state,
   },
 } satisfies Routes<string>;
 
@@ -130,7 +136,7 @@ describe("Router", () => {
     });
 
     it("should replace the state by default, if target is a mapping funciton", async () => {
-      await router.go("/foo", { search: { a: "b" } });
+      await router.go(["foo"], { search: { a: "b" } });
       await router.go(() => ({ search: { a: "c" } }));
 
       expect(history.replaceState).toHaveBeenCalledWith(null, "", "/foo?a=c");
@@ -229,12 +235,39 @@ describe("Router", () => {
       // /x requires state: { a: boolean } — omitting state is a type error (see go() test above)
       // Providing the required state is valid:
       await router.go("/x", { state: { a: true } });
+      await router.go("/x/y", { state: 32 });
+      await router.go("/x/ntesr", { state: "4" });
     });
 
-    it("should not allow state when the route handler declares no state type", async () => {
+    it("should type route() state and search contracts", async () => {
       router.init();
-      // @ts-expect-error - /foo has no state type, passing state should be a type error
-      await router.go("/foo", { state: { a: true } });
+
+      await router.go("/some-route", {
+        state: { foo: 1 },
+        search: { bar: "baz" },
+      });
+
+      if (false) {
+        // @ts-expect-error - search is required by route()
+        await router.go("/some-route", { state: { foo: 1 } });
+        // @ts-expect-error - state is required by route()
+        await router.go("/some-route", { search: { bar: "baz" } });
+        // @ts-expect-error - search.bar must be a string
+        await router.go("/some-route", {
+          state: { foo: 1 },
+          search: { bar: 1 },
+        });
+      }
+    });
+
+    it("should not allow state or search when the route handler declares no meta type", async () => {
+      router.init();
+      if (false) {
+        // @ts-expect-error - /foo has no state type, passing state should be a type error
+        await router.go("/foo", { state: { a: true } });
+        // @ts-expect-error - /foo has no search type, passing search should be a type error
+        await router.go("/foo", { search: { a: "b" } });
+      }
     });
   });
 });
