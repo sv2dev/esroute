@@ -1,31 +1,35 @@
 {
   "name": "esroute",
-  "version": "0.12.4",
+  "version": "0.13.0",
   "description": "A small efficient framework-agnostic client-side routing library, written in TypeScript.",
+  "keywords": [
+    "route",
+    "routing"
+  ],
+  "homepage": "https://github.com/sv2dev/esroute/tree/main/packages/esroute",
+  "license": "MIT",
+  "author": "Sven Rogge <mail@sven-rogge.com>",
+  "repository": "github:sv2dev/esroute",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "type": "module",
-  "types": "dist/index.d.ts",
+  "sideEffects": false,
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   },
-  "files": ["dist", "LICENSE", "README.md"],
-  "sideEffects": false,
-  "license": "MIT",
-  "author": "Sven Rogge <mail@sven-rogge.com>",
-  "repository": "github:sv2dev/esroute",
-  "homepage": "https://github.com/sv2dev/esroute/tree/main/packages/esroute",
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit -p tsconfig.check.json",
     "prepublishOnly": "npm run build"
   },
-  "keywords": [
-    "route",
-    "routing"
-  ],
   "devDependencies": {
     "typescript": "^5.4.5"
   }
